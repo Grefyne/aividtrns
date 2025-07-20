@@ -51,7 +51,6 @@ if ! command -v python &> /dev/null; then
     exit 1
 fi
 
-
 # Check if required scripts exist
 check_file "scripts/cleanup.py"
 check_file "scripts/extract_audio.py"
