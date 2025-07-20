@@ -1,0 +1,48 @@
+{
+  "model_used": "large",
+  "total_segments": 3,
+  "segments": [
+    {
+      "segment_id": "segment001",
+      "speaker": "SPEAKER_01",
+      "start_time": 0.008488964346349746,
+      "end_time": 3.234295415959253,
+      "duration": 3.2258064516129035,
+      "start_time_str": "00-00-00.008",
+      "end_time_str": "00-00-03.234",
+      "duration_str": "03.226",
+      "audio_file": "segment001_SPEAKER_01_00-00-00.008_00-00-03.234_03.226.wav",
+      "transcription": "What's it like to run a 450 million dollar company?",
+      "language": "en",
+      "confidence": 0.0
+    },
+    {
+      "segment_id": "segment002",
+      "speaker": "SPEAKER_00",
+      "start_time": 5.2207130730050935,
+      "end_time": 41.97792869269949,
+      "duration": 36.7572156196944,
+      "start_time_str": "00-00-05.221",
+      "end_time_str": "00-00-41.978",
+      "duration_str": "36.757",
+      "audio_file": "segment002_SPEAKER_00_00-00-05.221_00-00-41.978_36.757.wav",
+      "transcription": "busy, very chaotic, quickly evolving. The AI space is blowing up right now. And so when we started the company three years ago, it was just me and two other guys just building a product that we loved. And now the team is rapidly expanding. I'm now like a manager, I'm managing a lot of people. And just the scale of problems that happen, if the app goes down, there's 500,000 people that are upset about it.",
+      "language": "en",
+      "confidence": 0.0
+    },
+    {
+      "segment_id": "segment003",
+      "speaker": "SPEAKER_01",
+      "start_time": 42.64006791171477,
+      "end_time": 56.544991511035654,
+      "duration": 13.904923599320881,
+      "start_time_str": "00-00-42.640",
+      "end_time_str": "00-00-56.545",
+      "duration_str": "13.905",
+      "audio_file": "segment003_SPEAKER_01_00-00-42.640_00-00-56.545_13.905.wav",
+      "transcription": "Yeah, that's one trend I noticed when, you know, looking at interviews of CEOs and founders. Like early on, they always say like, you know, they don't want to be in meetings. But like once they get to a certain level, basically all they do is like meetings.",
+      "language": "en",
+      "confidence": 0.0
+    }
+  ]
+}

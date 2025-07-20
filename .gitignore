@@ -88,3 +88,11 @@ transformers_cache/
 *.flac
 *.aac
 *.ogg 
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/2d106det.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/2d106det.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/genderage.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/det_10g.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/2d106det.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/2d106det.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/det_10g.onnx
+latentsync_integration/checkpoints/auxiliary/models/buffalo_l/genderage.onnx

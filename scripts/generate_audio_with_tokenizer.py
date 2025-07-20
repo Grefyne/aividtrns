@@ -288,7 +288,8 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
     """
     segment_id = segment['segment_id']
     speaker = segment['speaker']
-    translated_text = segment['translated_transcription']
+    # Handle both transcribed and translated formats
+    translated_text = segment.get('translated_transcription') or segment.get('transcription', '')
     
     print(f"  🎵 Generating audio for segment {segment_id}...")
     print(f"  👤 Speaker: {speaker}")
@@ -330,8 +331,15 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
     
     print(f"  🎯 Target confidence threshold: {confidence_threshold}%")
     
+    # Create unique temporary path for each attempt to avoid conflicts
+    temp_dir = os.path.join(output_dir, f"temp_{segment_id}")
+    os.makedirs(temp_dir, exist_ok=True)
+    
     for attempt in range(max_retries):
         print(f"  🎬 Attempt {attempt + 1}/{max_retries}...")
+        
+        # Use temporary path for this attempt
+        temp_output_path = os.path.join(temp_dir, f"attempt_{attempt + 1}.wav")
         
         try:
             # Generate audio with maximum quality settings
@@ -341,8 +349,8 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                 chunk_files = []
                 
                 for i, chunk in enumerate(text_chunks):
-                    chunk_filename = f"{segment_id}_{speaker}_chunk{i+1}_{segment['start_time_str']}_{segment['end_time_str']}_{duration_str}.wav"
-                    chunk_path = os.path.join(output_dir, chunk_filename)
+                    chunk_filename = f"chunk{i+1}_attempt{attempt + 1}.wav"
+                    chunk_path = os.path.join(temp_dir, chunk_filename)
                     
                     # Generate with maximum quality settings
                     tts.tts_to_file(
@@ -362,16 +370,16 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                 print(f"    🔗 Concatenating {len(chunk_files)} chunks...")
                 concat_cmd = [
                     "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-                    "-i", "/dev/stdin", "-c", "copy", output_path
+                    "-i", "/dev/stdin", "-c", "copy", temp_output_path
                 ]
                 
                 # Create input list for FFmpeg
                 file_list = "\n".join([f"file '{os.path.abspath(f)}'" for f in chunk_files])
                 
                 result = subprocess.run(concat_cmd, input=file_list, text=True, 
-                                      capture_output=True, check=True)
+                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True)
                 
-                # Clean up chunk files
+                # Clean up chunk files immediately
                 for chunk_file in chunk_files:
                     if os.path.exists(chunk_file):
                         os.remove(chunk_file)
@@ -384,7 +392,7 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                     text=combined_text,
                     speaker_wav=speaker_sample,
                     language=language,
-                    file_path=output_path,
+                    file_path=temp_output_path,
                     temperature=0.65,           # Stability
                     repetition_penalty=5.0,    # Reduce artifacts
                     top_k=20,                  # Higher quality
@@ -396,7 +404,7 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             try:
                 duration_cmd = [
                     "ffprobe", "-v", "quiet", "-show_entries", "format=duration", 
-                    "-of", "csv=p=0", output_path
+                    "-of", "csv=p=0", temp_output_path
                 ]
                 duration_result = subprocess.run(duration_cmd, capture_output=True, text=True, check=True)
                 actual_audio_duration = float(duration_result.stdout.strip())
@@ -409,7 +417,7 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             
             # Verify quality with Whisper
             print(f"    🎤 Verifying quality with Whisper...")
-            verification = verify_transcription_with_whisper(output_path, combined_text, language)
+            verification = verify_transcription_with_whisper(temp_output_path, combined_text, language)
             
             similarity = verification["similarity"]
             whisper_conf = verification["whisper_confidence"]
@@ -420,6 +428,12 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             
             if similarity >= confidence_threshold:
                 print(f"    ✅ Quality meets threshold ({similarity:.1f}% >= {confidence_threshold}%)")
+                # Move successful file to final location
+                import shutil
+                shutil.move(temp_output_path, output_path)
+                # Clean up temp directory
+                import shutil
+                shutil.rmtree(temp_dir, ignore_errors=True)
                 return {
                     "success": True,
                     "output_path": output_path,
@@ -435,19 +449,16 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                 if similarity > best_similarity:
                     print(f"    📈 New best attempt: {similarity:.1f}% (attempt {attempt + 1})")
                     best_similarity = similarity
-                    best_audio_path = output_path + f"_best_attempt_{attempt + 1}.wav"
-                    # Save this attempt as the best
-                    if os.path.exists(output_path):
-                        import shutil
-                        shutil.copy2(output_path, best_audio_path)
+                    # Keep track of best attempt data
                     best_verification = verification.copy()
                     best_verification["actual_duration"] = actual_audio_duration
+                    # Save the best temp file path
+                    best_audio_path = temp_output_path
                 else:
                     print(f"    📉 Lower quality than best attempt ({similarity:.1f}% < {best_similarity:.1f}%)")
-                
-                # Clean up this attempt if it's not the best
-                if similarity < best_similarity and os.path.exists(output_path):
-                    os.remove(output_path)
+                    # Clean up this attempt since it's not the best
+                    if os.path.exists(temp_output_path):
+                        os.remove(temp_output_path)
             
         except Exception as e:
             print(f"    ❌ Generation failed: {e}")
@@ -455,11 +466,13 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
     
     # Use best attempt if no attempt met threshold
     if best_audio_path and os.path.exists(best_audio_path):
-        # Move best attempt to final location
+        print(f"  📋 No attempt met {confidence_threshold}% threshold. Using best attempt ({best_similarity:.1f}%)")
+        
+        # Move the best attempt to final location
         import shutil
         shutil.move(best_audio_path, output_path)
-        
-        print(f"  📋 No attempt met {confidence_threshold}% threshold. Using best attempt ({best_similarity:.1f}%)")
+        # Clean up temp directory
+        shutil.rmtree(temp_dir, ignore_errors=True)
         
         return {
             "success": True,
@@ -472,6 +485,10 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             "actual_duration": best_verification.get("actual_duration"),
             "quality_status": "best_below_threshold"
         }
+    
+    # Clean up temp directory if all attempts failed
+    import shutil
+    shutil.rmtree(temp_dir, ignore_errors=True)
     
     print(f"  ❌ All {max_retries} attempts failed")
     return None

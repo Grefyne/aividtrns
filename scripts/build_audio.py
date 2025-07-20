@@ -228,8 +228,9 @@ def main():
                        help="Path to translated transcription JSON file")
     parser.add_argument("--audio-dir", required=True,
                        help="Directory containing translated audio segments")
-    parser.add_argument("--output", required=True,
-                       help="Output path for merged audio file")
+    parser.add_argument("--output", 
+                       default="audio_export/merged_translated_audio.wav",
+                       help="Output path for merged audio file (default: audio_export/merged_translated_audio.wav)")
     args = parser.parse_args()
     
     # Check if input files exist
