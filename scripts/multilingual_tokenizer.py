@@ -58,7 +58,7 @@ def get_spacy_lang(lang):
         return English()
 
 
-def split_sentence(text, lang, text_split_length=150):
+def split_sentence(text, lang, text_split_length=100):
     """
     Preprocess the input text and split into manageable chunks.
     Uses sentence-based splitting with reduced length to prevent TTS truncation.
