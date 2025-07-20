@@ -1,0 +1,18 @@
+{
+  "audio_file": "audio_export/video1_audio.wav",
+  "total_speakers": 2,
+  "samples": [
+    {
+      "speaker": "SPEAKER_01",
+      "sample_file": "speaker01_sample.wav",
+      "total_segments": 12,
+      "total_duration": 91.32427843803029
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "sample_file": "speaker00_sample.wav",
+      "total_segments": 25,
+      "total_duration": 665.1273344651952
+    }
+  ]
+}

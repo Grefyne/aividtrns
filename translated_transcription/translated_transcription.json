@@ -1,0 +1,8 @@
+{
+  "model_used": "facebook/nllb-200-distilled-600M",
+  "source_language": "en",
+  "target_language": "spanish",
+  "target_language_code": "spa_Latn",
+  "total_segments": 0,
+  "segments": []
+}

@@ -1,0 +1,380 @@
+{
+  "audio_file": "audio_export/video1_audio.wav",
+  "total_segments": 37,
+  "speakers": [
+    "SPEAKER_00",
+    "SPEAKER_01"
+  ],
+  "segments": [
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 0.008488964346349746,
+      "end_time": 3.234295415959253,
+      "duration": 3.2258064516129035,
+      "segment_id": "segment001",
+      "start_time_str": "00-00-00.008",
+      "end_time_str": "00-00-03.234",
+      "duration_str": "03.226"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 5.2207130730050935,
+      "end_time": 41.97792869269949,
+      "duration": 36.7572156196944,
+      "segment_id": "segment002",
+      "start_time_str": "00-00-05.221",
+      "end_time_str": "00-00-41.978",
+      "duration_str": "36.757"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 42.64006791171477,
+      "end_time": 56.544991511035654,
+      "duration": 13.904923599320881,
+      "segment_id": "segment003",
+      "start_time_str": "00-00-42.640",
+      "end_time_str": "00-00-56.545",
+      "duration_str": "13.905"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 58.1578947368421,
+      "end_time": 79.12563667232598,
+      "duration": 20.96774193548388,
+      "segment_id": "segment004",
+      "start_time_str": "00-00-58.158",
+      "end_time_str": "00-01-19.126",
+      "duration_str": "20.968"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 79.63497453310697,
+      "end_time": 88.6672325976231,
+      "duration": 9.032258064516128,
+      "segment_id": "segment005",
+      "start_time_str": "00-01-19.635",
+      "end_time_str": "00-01-28.667",
+      "duration_str": "09.032"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 88.5823429541596,
+      "end_time": 96.17147707979626,
+      "duration": 7.589134125636662,
+      "segment_id": "segment006",
+      "start_time_str": "00-01-28.582",
+      "end_time_str": "00-01-36.171",
+      "duration_str": "07.589"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 96.93548387096774,
+      "end_time": 107.46179966044144,
+      "duration": 10.5263157894737,
+      "segment_id": "segment007",
+      "start_time_str": "00-01-36.935",
+      "end_time_str": "00-01-47.462",
+      "duration_str": "10.526"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 108.17487266553482,
+      "end_time": 120.28013582342953,
+      "duration": 12.105263157894711,
+      "segment_id": "segment008",
+      "start_time_str": "00-01-48.175",
+      "end_time_str": "00-02-00.280",
+      "duration_str": "12.105"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 121.4176570458404,
+      "end_time": 140.90831918505944,
+      "duration": 19.49066213921904,
+      "segment_id": "segment009",
+      "start_time_str": "00-02-01.418",
+      "end_time_str": "00-02-20.908",
+      "duration_str": "19.491"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 139.99151103565367,
+      "end_time": 141.26485568760611,
+      "duration": 1.273344651952442,
+      "segment_id": "segment010",
+      "start_time_str": "00-02-19.992",
+      "end_time_str": "00-02-21.265",
+      "duration_str": "01.273"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 142.1137521222411,
+      "end_time": 170.97623089983023,
+      "duration": 28.862478777589132,
+      "segment_id": "segment011",
+      "start_time_str": "00-02-22.114",
+      "end_time_str": "00-02-50.976",
+      "duration_str": "28.862"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 171.41765704584043,
+      "end_time": 206.47707979626486,
+      "duration": 35.05942275042443,
+      "segment_id": "segment012",
+      "start_time_str": "00-02-51.418",
+      "end_time_str": "00-03-26.477",
+      "duration_str": "35.059"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 207.64855687606112,
+      "end_time": 243.79456706281834,
+      "duration": 36.14601018675722,
+      "segment_id": "segment013",
+      "start_time_str": "00-03-27.649",
+      "end_time_str": "00-04-03.795",
+      "duration_str": "36.146"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 245.5602716468591,
+      "end_time": 304.5755517826825,
+      "duration": 59.01528013582342,
+      "segment_id": "segment014",
+      "start_time_str": "00-04-05.560",
+      "end_time_str": "00-05-04.576",
+      "duration_str": "59.015"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 306.06960950764005,
+      "end_time": 309.6689303904924,
+      "duration": 3.5993208828523393,
+      "segment_id": "segment015",
+      "start_time_str": "00-05-06.070",
+      "end_time_str": "00-05-09.669",
+      "duration_str": "03.599"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 310.77249575551787,
+      "end_time": 362.53820033955856,
+      "duration": 51.76570458404069,
+      "segment_id": "segment016",
+      "start_time_str": "00-05-10.772",
+      "end_time_str": "00-06-02.538",
+      "duration_str": "51.766"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 364.151103565365,
+      "end_time": 368.05602716468593,
+      "duration": 3.9049235993209095,
+      "segment_id": "segment017",
+      "start_time_str": "00-06-04.151",
+      "end_time_str": "00-06-08.056",
+      "duration_str": "03.905"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 369.05772495755525,
+      "end_time": 386.0526315789474,
+      "duration": 16.994906621392147,
+      "segment_id": "segment018",
+      "start_time_str": "00-06-09.058",
+      "end_time_str": "00-06-26.053",
+      "duration_str": "16.995"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 387.2750424448218,
+      "end_time": 393.2003395585739,
+      "duration": 5.9252971137520944,
+      "segment_id": "segment019",
+      "start_time_str": "00-06-27.275",
+      "end_time_str": "00-06-33.200",
+      "duration_str": "05.925"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 393.2003395585739,
+      "end_time": 404.2529711375213,
+      "duration": 11.052631578947398,
+      "segment_id": "segment020",
+      "start_time_str": "00-06-33.200",
+      "end_time_str": "00-06-44.253",
+      "duration_str": "11.053"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 393.2342954159593,
+      "end_time": 394.43972835314094,
+      "duration": 1.2054329371816266,
+      "segment_id": "segment021",
+      "start_time_str": "00-06-33.234",
+      "end_time_str": "00-06-34.440",
+      "duration_str": "01.205"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 404.7453310696095,
+      "end_time": 473.5398981324279,
+      "duration": 68.79456706281837,
+      "segment_id": "segment022",
+      "start_time_str": "00-06-44.745",
+      "end_time_str": "00-07-53.540",
+      "duration_str": "68.795"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 474.4227504244483,
+      "end_time": 479.125636672326,
+      "duration": 4.7028862478777,
+      "segment_id": "segment023",
+      "start_time_str": "00-07-54.423",
+      "end_time_str": "00-07-59.126",
+      "duration_str": "04.703"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 480.5008488964346,
+      "end_time": 485.4584040747029,
+      "duration": 4.957555178268308,
+      "segment_id": "segment024",
+      "start_time_str": "00-08-00.501",
+      "end_time_str": "00-08-05.458",
+      "duration_str": "04.958"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 487.1052631578948,
+      "end_time": 554.2869269949067,
+      "duration": 67.18166383701191,
+      "segment_id": "segment025",
+      "start_time_str": "00-08-07.105",
+      "end_time_str": "00-09-14.287",
+      "duration_str": "67.182"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 553.7266553480476,
+      "end_time": 555.6960950764008,
+      "duration": 1.9694397283531089,
+      "segment_id": "segment026",
+      "start_time_str": "00-09-13.727",
+      "end_time_str": "00-09-15.696",
+      "duration_str": "01.969"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 556.7826825127333,
+      "end_time": 560.8404074702887,
+      "duration": 4.057724957555365,
+      "segment_id": "segment027",
+      "start_time_str": "00-09-16.783",
+      "end_time_str": "00-09-20.840",
+      "duration_str": "04.058"
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "start_time": 560.9592529711376,
+      "end_time": 561.553480475382,
+      "duration": 0.5942275042443725,
+      "segment_id": "segment028",
+      "start_time_str": "00-09-20.959",
+      "end_time_str": "00-09-21.553",
+      "duration_str": "00.594"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 562.6400679117148,
+      "end_time": 647.0543293718167,
+      "duration": 84.4142614601019,
+      "segment_id": "segment029",
+      "start_time_str": "00-09-22.640",
+      "end_time_str": "00-10-47.054",
+      "duration_str": "84.414"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 648.6332767402378,
+      "end_time": 675.1018675721562,
+      "duration": 26.46859083191839,
+      "segment_id": "segment030",
+      "start_time_str": "00-10-48.633",
+      "end_time_str": "00-11-15.102",
+      "duration_str": "26.469"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 676.8336162988116,
+      "end_time": 679.0237691001698,
+      "duration": 2.190152801358181,
+      "segment_id": "segment031",
+      "start_time_str": "00-11-16.834",
+      "end_time_str": "00-11-19.024",
+      "duration_str": "02.190"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 681.0611205432938,
+      "end_time": 689.6179966044142,
+      "duration": 8.55687606112042,
+      "segment_id": "segment032",
+      "start_time_str": "00-11-21.061",
+      "end_time_str": "00-11-29.618",
+      "duration_str": "08.557"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 690.9083191850593,
+      "end_time": 692.1477079796264,
+      "duration": 1.2393887945670485,
+      "segment_id": "segment033",
+      "start_time_str": "00-11-30.908",
+      "end_time_str": "00-11-32.148",
+      "duration_str": "01.239"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 693.7945670628183,
+      "end_time": 736.5619694397283,
+      "duration": 42.76740237691001,
+      "segment_id": "segment034",
+      "start_time_str": "00-11-33.795",
+      "end_time_str": "00-12-16.562",
+      "duration_str": "42.767"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 737.5636672325977,
+      "end_time": 758.7011884550086,
+      "duration": 21.137521222410896,
+      "segment_id": "segment035",
+      "start_time_str": "00-12-17.564",
+      "end_time_str": "00-12-38.701",
+      "duration_str": "21.138"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 760.0764006791171,
+      "end_time": 775.679117147708,
+      "duration": 15.60271646859087,
+      "segment_id": "segment036",
+      "start_time_str": "00-12-40.076",
+      "end_time_str": "00-12-55.679",
+      "duration_str": "15.603"
+    },
+    {
+      "speaker": "SPEAKER_00",
+      "start_time": 776.7147707979627,
+      "end_time": 790.1273344651952,
+      "duration": 13.412563667232462,
+      "segment_id": "segment037",
+      "start_time_str": "00-12-56.715",
+      "end_time_str": "00-13-10.127",
+      "duration_str": "13.413"
+    }
+  ]
+}

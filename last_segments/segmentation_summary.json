@@ -1,0 +1,465 @@
+{
+  "total_segments": 30,
+  "total_original_segments": 36,
+  "filtered_segments": 6,
+  "min_duration_threshold": 0.5,
+  "segments": [
+    {
+      "segment_number": 1,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:00:00.030",
+      "end_time": "00:00:03.254",
+      "duration": 3.223,
+      "detected_language": "en",
+      "transcript": "What's it like to run a $450 million company?",
+      "transcript_translated": "\u00bfC\u00f3mo es dirigir una empresa de 450 millones de d\u00f3lares?",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment001_SPEAKER_01_00-00-00.030_00-00-03.254_3.223.mp4",
+        "audio": "audio/segment001_SPEAKER_01_00-00-00.030_00-00-03.254_3.223.wav"
+      }
+    },
+    {
+      "segment_number": 2,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:00:05.245",
+      "end_time": "00:00:41.999",
+      "duration": 36.753,
+      "detected_language": "en",
+      "transcript": "busy, very chaotic, quickly evolving. The AI space is blowing up right now. And so when we started the company three years ago, it was just me and two other guys just building a product that we loved. And now the team is rapidly expanding. I'm now like a manager. I'm managing a lot of people. And just the scale of problems that happen, if the app goes down, there's 500,000 people that are upset about it.",
+      "transcript_translated": "Estoy muy ocupado, muy ca\u00f3tico, evolucionando r\u00e1pidamente. El espacio de la IA est\u00e1 explotando en este momento. As\u00ed que cuando empezamos la compa\u00f1\u00eda hace tres a\u00f1os, era s\u00f3lo yo y otros dos chicos construyendo un producto que am\u00e1bamos. Y ahora el equipo se est\u00e1 expandiendo r\u00e1pidamente. Ahora soy como un gerente. Estoy gestionando a mucha gente. Y s\u00f3lo la escala de problemas que ocurren, si la aplicaci\u00f3n cae, hay 500,000 personas que est\u00e1n molestas por ello.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment002_SPEAKER_00_00-00-05.245_00-00-41.999_36.753.mp4",
+        "audio": "audio/segment002_SPEAKER_00_00-00-05.245_00-00-41.999_36.753.wav"
+      }
+    },
+    {
+      "segment_number": 3,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:00:41.999",
+      "end_time": "00:00:56.528",
+      "duration": 14.529,
+      "detected_language": "en",
+      "transcript": "Yeah, that's one trend I noticed when, you know, looking at interviews of CEOs and founders. Like early on, they always say like, you know, they don't want to be in meetings. But like once they get to a certain level, basically all they do is like meetings.",
+      "transcript_translated": "S\u00ed, esa es una tendencia que not\u00e9 cuando, ya sabes, mir\u00e9 entrevistas de CEO y fundadores. Como desde el principio, siempre dicen, ya sabes, que no quieren estar en reuniones. Pero una vez que llegan a un cierto nivel, b\u00e1sicamente todo lo que hacen es como reuniones.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment003_SPEAKER_01_00-00-41.999_00-00-56.528_14.529.mp4",
+        "audio": "audio/segment003_SPEAKER_01_00-00-41.999_00-00-56.528_14.529.wav"
+      }
+    },
+    {
+      "segment_number": 4,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:00:58.165",
+      "end_time": "00:01:19.124",
+      "duration": 20.958,
+      "detected_language": "en",
+      "transcript": "Yep, I have personally experienced that. It's nicer if you can avoid doing a meeting and you can just solve problems with engineers by sitting next to them. I find that that's a much better use of time. But yeah, this impulse to have a meeting is something that you have to continually fight against.",
+      "transcript_translated": "S\u00ed, lo he experimentado personalmente. Es mejor si puedes evitar hacer una reuni\u00f3n y puedes resolver problemas con los ingenieros sent\u00e1ndote junto a ellos. Me parece que es un mejor uso del tiempo. Pero s\u00ed, este impulso de tener una reuni\u00f3n es algo contra lo que tienes que luchar continuamente.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment004_SPEAKER_00_00-00-58.165_00-01-19.124_20.958.mp4",
+        "audio": "audio/segment004_SPEAKER_00_00-00-58.165_00-01-19.124_20.958.wav"
+      }
+    },
+    {
+      "segment_number": 5,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:01:19.630",
+      "end_time": "00:01:28.658",
+      "duration": 9.028,
+      "detected_language": "en",
+      "transcript": "Okay, so you mentioned that you started with three people. So how many of you are today, the total amount of employees?",
+      "transcript_translated": "Vale, as\u00ed que mencion\u00f3 que comenz\u00f3 con tres personas. \u00bfCu\u00e1ntos de ustedes son hoy, la cantidad total de empleados?",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment005_SPEAKER_01_00-01-19.630_00-01-28.658_9.028.mp4",
+        "audio": "audio/segment005_SPEAKER_01_00-01-19.630_00-01-28.658_9.028.wav"
+      }
+    },
+    {
+      "segment_number": 6,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:01:28.590",
+      "end_time": "00:01:36.184",
+      "duration": 7.593,
+      "detected_language": "en",
+      "transcript": "So currently there's like 12 of us and we expect this number to continue to grow.",
+      "transcript_translated": "As\u00ed que actualmente somos 12 y esperamos que este n\u00famero contin\u00fae creciendo.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment006_SPEAKER_00_00-01-28.590_00-01-36.184_7.593.mp4",
+        "audio": "audio/segment006_SPEAKER_00_00-01-28.590_00-01-36.184_7.593.wav"
+      }
+    },
+    {
+      "segment_number": 7,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:01:36.944",
+      "end_time": "00:01:47.474",
+      "duration": 10.53,
+      "detected_language": "en",
+      "transcript": "Yeah, that's pretty amazing for such a big valuation. But I guess all the AI companies have pretty high valuation per employee ratios.",
+      "transcript_translated": "S\u00ed, eso es incre\u00edble para una valoraci\u00f3n tan grande, pero supongo que todas las compa\u00f1\u00edas de IA tienen una valoraci\u00f3n bastante alta por proporci\u00f3n de empleados.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment007_SPEAKER_01_00-01-36.944_00-01-47.474_10.530.mp4",
+        "audio": "audio/segment007_SPEAKER_01_00-01-36.944_00-01-47.474_10.530.wav"
+      }
+    },
+    {
+      "segment_number": 8,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:01:48.182",
+      "end_time": "00:01:55.388",
+      "duration": 7.205,
+      "detected_language": "en",
+      "transcript": "Yep. So I think there's a reason for this, which is we really have a very, very high bar for hiring.",
+      "transcript_translated": "As\u00ed que creo que hay una raz\u00f3n para esto, que es que tenemos un nivel muy, muy alto para contratar.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment008_SPEAKER_00_00-01-48.182_00-01-55.388_7.205.mp4",
+        "audio": "audio/segment008_SPEAKER_00_00-01-48.182_00-01-55.388_7.205.wav"
+      }
+    },
+    {
+      "segment_number": 10,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:01:55.709",
+      "end_time": "00:02:00.299",
+      "duration": 4.59,
+      "detected_language": "en",
+      "transcript": "And we've got a great emphasis and we really value talent density.",
+      "transcript_translated": "Y tenemos un gran \u00e9nfasis y realmente valoramos la densidad de talento.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment010_SPEAKER_00_00-01-55.709_00-02-00.299_4.590.mp4",
+        "audio": "audio/segment010_SPEAKER_00_00-01-55.709_00-02-00.299_4.590.wav"
+      }
+    },
+    {
+      "segment_number": 12,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:02:01.412",
+      "end_time": "00:02:17.865",
+      "duration": 16.453,
+      "detected_language": "en",
+      "transcript": "So, you know, there are there are like these amazing companies that you hear about, whether that's how Instagram was able to to scale to this billion dollar valuation and this amazing product with I think they only had like 12 engineers. I think WhatsApp.",
+      "transcript_translated": "As\u00ed que, ya sabes, hay empresas como estas incre\u00edbles de las que escuchas, si es as\u00ed como Instagram fue capaz de escalar a esta valoraci\u00f3n de mil millones de d\u00f3lares y este producto incre\u00edble con creo que s\u00f3lo ten\u00edan como 12 ingenieros. Creo que WhatsApp.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment012_SPEAKER_00_00-02-01.412_00-02-17.865_16.453.mp4",
+        "audio": "audio/segment012_SPEAKER_00_00-02-01.412_00-02-17.865_16.453.wav"
+      }
+    },
+    {
+      "segment_number": 14,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:02:17.882",
+      "end_time": "00:02:20.903",
+      "duration": 3.02,
+      "detected_language": "en",
+      "transcript": "I think only seven actually, when they reached one billion.",
+      "transcript_translated": "Creo que s\u00f3lo siete en realidad, cuando llegaron a mil millones.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment014_SPEAKER_00_00-02-17.882_00-02-20.903_3.020.mp4",
+        "audio": "audio/segment014_SPEAKER_00_00-02-17.882_00-02-20.903_3.020.wav"
+      }
+    },
+    {
+      "segment_number": 15,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:02:20.363",
+      "end_time": "00:02:21.257",
+      "duration": 0.894,
+      "detected_language": "en",
+      "transcript": "One billion, yeah.",
+      "transcript_translated": "Un bill\u00f3n, s\u00ed.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment015_SPEAKER_01_00-02-20.363_00-02-21.257_0.894.mp4",
+        "audio": "audio/segment015_SPEAKER_01_00-02-20.363_00-02-21.257_0.894.wav"
+      }
+    },
+    {
+      "segment_number": 16,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:02:22.118",
+      "end_time": "00:02:50.974",
+      "duration": 28.856,
+      "detected_language": "en",
+      "transcript": "And then you get stories of WhatsApp and how far they were able to get with as few engineers. And I just think it's very clear being a software engineer myself that a talented, just a small team of really talented people can really, really build a huge product and can have a really big impact. And if you just randomly add people to the team, it actually slows things down and it causes many more problems than it solves.",
+      "transcript_translated": "Y luego se obtienen historias de WhatsApp y lo lejos que fueron capaces de llegar con tan pocos ingenieros. Y creo que es muy claro que siendo un ingeniero de software yo mismo que un equipo talentoso, s\u00f3lo un peque\u00f1o equipo de personas realmente talentosas puede realmente, realmente construir un producto enorme y puede tener un impacto realmente grande. Y si se a\u00f1ade a la gente al azar al equipo, en realidad ralentiza las cosas y causa muchos m\u00e1s problemas de los que resuelve.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment016_SPEAKER_00_00-02-22.118_00-02-50.974_28.856.mp4",
+        "audio": "audio/segment016_SPEAKER_00_00-02-22.118_00-02-50.974_28.856.wav"
+      }
+    },
+    {
+      "segment_number": 17,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:02:51.430",
+      "end_time": "00:03:12.439",
+      "duration": 21.009,
+      "detected_language": "en",
+      "transcript": "Yeah, I think this is one of the biggest mistakes, like, first time entrepreneurs make. They're always in a rush to, like, grow the company and, you know, hire as many people as possible. But if you hire the wrong kind of people, then, you know, doing some restructuring later on, that's, like, 10 times more painful than just, you know, doing more interviews and really finding that core person that fits exactly what you need. Yeah.",
+      "transcript_translated": "S\u00ed, creo que este es uno de los errores m\u00e1s grandes que cometen los emprendedores por primera vez. Siempre tienen prisa por hacer crecer la empresa y, ya sabes, contratar a tantas personas como sea posible. Pero si contratas al tipo equivocado de personas, entonces, ya sabes, hacer alguna reestructuraci\u00f3n m\u00e1s tarde, eso es, como, 10 veces m\u00e1s doloroso que simplemente, ya sabes, hacer m\u00e1s entrevistas y realmente encontrar la persona principal que se adapta exactamente a lo que necesitas.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment017_SPEAKER_01_00-02-51.430_00-03-12.439_21.009.mp4",
+        "audio": "audio/segment017_SPEAKER_01_00-02-51.430_00-03-12.439_21.009.wav"
+      }
+    },
+    {
+      "segment_number": 20,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:03:12.962",
+      "end_time": "00:03:26.479",
+      "duration": 13.516,
+      "detected_language": "en",
+      "transcript": "Yeah, yeah. Okay, so let's take a step back before Chai, so you went to Cambridge and then you had you found it a hedge fund. So what was that like?",
+      "transcript_translated": "Vale, vamos a dar un paso atr\u00e1s antes de Chai, as\u00ed que fuiste a Cambridge y luego lo hiciste encontrar un fondo de cobertura. \u00bfY c\u00f3mo fue eso?",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment020_SPEAKER_01_00-03-12.962_00-03-26.479_13.516.mp4",
+        "audio": "audio/segment020_SPEAKER_01_00-03-12.962_00-03-26.479_13.516.wav"
+      }
+    },
+    {
+      "segment_number": 21,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:03:27.660",
+      "end_time": "00:06:03.923",
+      "duration": 156.262,
+      "detected_language": "en",
+      "transcript": "cool. So coming out of Cambridge I studied economics, this is back in 2012 and machine learning was really just coming into the mainstream, it was just coming into production in industrial settings and there was clearly an opportunity to take all these algorithms, neural networks, random trees and kind of apply them to a financial setting and so you know again me and just a couple friends we got together and we just started getting data sets, started training neural networks and seeing if we could predict the price of assets in the future and after about a year or so I started to work on a new project called the Smart Network. So in about a year we'd sort of built this strategy that was that was making a few hundred thousand pounds a year which when I was 22 years old was a lot of money and was you know it was really I felt that was a really great success and so we just kept doubling down and so any money that we made we sort of reinvested in the business by hiring more engineers, more talented people, you know the first people I'd hire were my friends from Cambridge and some of them did really well, some of them did really badly and that caused me to sort of begin to dig into why is it that some people can be smart and add loads of value and other people could be smart and not add value and so as you described earlier on first-time managers, first-time founders will just try and hire people just quickly trying to collect people and throw bodies at the problem and then with that you'll encounter a lot of problems. And a lot of frictions and it's really about finding the right person to address the specific problem at hand and so yeah that hedge fund was called Seamless Capital. I started it with basically I had I probably had about $100,000 of money that I'd won throughout college playing poker. Nice. And I kind of took those poker winnings and scaled it up to now it's still running today it's a very profitable company it makes about five million pounds a year and it's all AI and machine learning. So",
+      "transcript_translated": "cool As\u00ed que saliendo de Cambridge estudi\u00e9 econom\u00eda, esto es de vuelta en 2012 y el aprendizaje autom\u00e1tico estaba realmente entrando en la corriente principal, estaba entrando en producci\u00f3n en entornos industriales y all\u00ed As\u00ed que en aproximadamente un a\u00f1o hab\u00edamos construido una estrategia que era que ganaba unos cientos de miles de libras al a\u00f1o que cuando ten\u00eda 22 a\u00f1os era mucho dinero y era realmente lo que sent\u00eda Y muchas fricciones y realmente se trata de encontrar a la persona adecuada para abordar el problema espec\u00edfico en cuesti\u00f3n y as\u00ed que s\u00ed que ese fondo de cobertura se llamaba Capital sin costuras Lo comenc\u00e9 con b\u00e1sicamente ten\u00eda probablemente ten\u00eda alrededor de $100,000 de dinero que hab\u00eda ganado durante la universidad jugando al p\u00f3ker Nice Y en cierto modo tom\u00e9 esas ganancias de p\u00f3quer y las ampli\u00e9 hasta ahora sigue funcionando hoy en d\u00eda es una empresa muy rentable gana alrededor de 5 millones de libras al a\u00f1o y todo es IA y aprendizaje autom\u00e1tico As\u00ed que...",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment021_SPEAKER_00_00-03-27.660_00-06-03.923_156.262.mp4",
+        "audio": "audio/segment021_SPEAKER_00_00-03-27.660_00-06-03.923_156.262.wav"
+      }
+    },
+    {
+      "segment_number": 22,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:06:04.142",
+      "end_time": "00:06:08.057",
+      "duration": 3.915,
+      "detected_language": "en",
+      "transcript": "Like 2012, that's like even before the deep learning revolution, basically.",
+      "transcript_translated": "Como en 2012, es como incluso antes de la revoluci\u00f3n del aprendizaje profundo, b\u00e1sicamente.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment022_SPEAKER_01_00-06-04.142_00-06-08.057_3.915.mp4",
+        "audio": "audio/segment022_SPEAKER_01_00-06-04.142_00-06-08.057_3.915.wav"
+      }
+    },
+    {
+      "segment_number": 23,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:06:09.070",
+      "end_time": "00:06:19.920",
+      "duration": 10.85,
+      "detected_language": "en",
+      "transcript": "It's just on the cusp. It's just as it was beginning. It really was the first. The big textbooks were being written. Andrew Wing's Coursera course was just coming out. Yeah, it was a really exciting time.",
+      "transcript_translated": "Es s\u00f3lo en la c\u00faspide, es justo como estaba comenzando, fue realmente el primero, los grandes libros de texto estaban siendo escritos, el curso de Andrew Wing de Coursera estaba saliendo. S\u00ed, fue un momento muy emocionante.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment023_SPEAKER_00_00-06-09.070_00-06-19.920_10.850.mp4",
+        "audio": "audio/segment023_SPEAKER_00_00-06-09.070_00-06-19.920_10.850.wav"
+      }
+    },
+    {
+      "segment_number": 24,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:06:11.027",
+      "end_time": "00:06:11.719",
+      "duration": 0.691,
+      "detected_language": "en",
+      "transcript": "it was beginning.",
+      "transcript_translated": "Estaba empezando.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment024_SPEAKER_01_00-06-11.027_00-06-11.719_0.691.mp4",
+        "audio": "audio/segment024_SPEAKER_01_00-06-11.027_00-06-11.719_0.691.wav"
+      }
+    },
+    {
+      "segment_number": 25,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:06:20.511",
+      "end_time": "00:06:26.046",
+      "duration": 5.534,
+      "detected_language": "en",
+      "transcript": "So I was doing, I was doing, um, neural networks before dropout existed.",
+      "transcript_translated": "As\u00ed que estaba haciendo, estaba haciendo, um, redes neuronales antes de que el abandono existiera.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment025_SPEAKER_00_00-06-20.511_00-06-26.046_5.534.mp4",
+        "audio": "audio/segment025_SPEAKER_00_00-06-20.511_00-06-26.046_5.534.wav"
+      }
+    },
+    {
+      "segment_number": 26,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:06:27.278",
+      "end_time": "00:06:34.450",
+      "duration": 7.171,
+      "detected_language": "en",
+      "transcript": "So, okay, so what made you like originally get into AI? Because you mentioned you studied economics. So, you know, that's... So...",
+      "transcript_translated": "Entonces, \u00bfqu\u00e9 te hizo gustar inicialmente entrar en IA? porque mencionaste que estudiaste econom\u00eda.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment026_SPEAKER_01_00-06-27.278_00-06-34.450_7.171.mp4",
+        "audio": "audio/segment026_SPEAKER_01_00-06-27.278_00-06-34.450_7.171.wav"
+      }
+    },
+    {
+      "segment_number": 27,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:06:32.712",
+      "end_time": "00:07:53.526",
+      "duration": 80.814,
+      "detected_language": "en",
+      "transcript": "So coming from the UK, really at that time and even still today, like most of the smart, you know, industrious people really end up finding themselves in finance. It's kind of is the UK is so much smaller than America. And it's kind of like London, the city of London. That's our one big like tech hub. And so finance is an exciting space where, you know, you've got all these really smart mathematicians, physicists who take all these techniques on how to model stuff, how to predict things, and they apply it to financial assets. And so it was very natural when, you know, all my peers were going into places like Jane Street or going into places like Citadel. You know, even I studied to like pass some round one. I've done interviews at a couple hedge funds and algorithmic trading firms. So it's really that was just the direction that people in the UK work towards. Very much like people on the West Coast. They all have in their mind they want to do a tech startup or be involved in tech in somehow. That's kind of the culture which I was surrounded by in the UK at the time when I graduated.",
+      "transcript_translated": "As\u00ed que viniendo del Reino Unido, realmente en ese momento e incluso hoy, como la mayor\u00eda de las personas inteligentes, sabes, trabajadoras realmente terminan encontr\u00e1ndose en las finanzas Es como si el Reino Unido es mucho m\u00e1s peque\u00f1o que Estados Unidos Y es como Londres, la ciudad de Londres. Ese es nuestro \u00fanico gran centro tecnol\u00f3gico Y as\u00ed que las finanzas son un espacio emocionante donde, ya sabes, tienes a todos estos matem\u00e1ticos realmente inteligentes, f\u00edsicos que toman todas estas t\u00e9cnicas de c\u00f3mo modelar cosas, c\u00f3mo predecir cosas, y que Y as\u00ed que era muy natural cuando, ya sabes, todos mis compa\u00f1eros iban a lugares como Jane Street o a lugares como Citadel Incluso yo estudi\u00e9 para pasar una ronda. He hecho entrevistas en un par de fondos de cobertura y empresas de comercio algor\u00edtmico As\u00ed que realmente esa fue la direcci\u00f3n en la que la gente en el Reino Unido trabaja hacia Muy parecido a la gente de la costa oeste Todos tienen en mente que quieren hacer una startup tecnol\u00f3gica o estar involucrados en la tecnolog\u00eda de alguna manera Esa es la cultura que me rode\u00f3 en el Reino Unido cuando me gradu\u00e9.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment027_SPEAKER_00_00-06-32.712_00-07-53.526_80.814.mp4",
+        "audio": "audio/segment027_SPEAKER_00_00-06-32.712_00-07-53.526_80.814.wav"
+      }
+    },
+    {
+      "segment_number": 28,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:07:54.404",
+      "end_time": "00:07:59.129",
+      "duration": 4.725,
+      "detected_language": "en",
+      "transcript": "So then what made you want to change direction?",
+      "transcript_translated": "Entonces, \u00bfqu\u00e9 te hizo querer cambiar de direcci\u00f3n?",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment028_SPEAKER_01_00-07-54.404_00-07-59.129_4.725.mp4",
+        "audio": "audio/segment028_SPEAKER_01_00-07-54.404_00-07-59.129_4.725.wav"
+      }
+    },
+    {
+      "segment_number": 29,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:08:00.512",
+      "end_time": "00:09:14.290",
+      "duration": 73.777,
+      "detected_language": "en",
+      "transcript": "Cool. So I really, really loved my first business. I had a lot of freedom. I didn't have any external investors. It was always just either my money or the team's money that we'd sort of pulled together. And so we were free to make our own mistakes, make our own decisions. We didn't have any customers. It was just our own capital that we would trade using our own algorithms. And it was very, very simple. And, you know, I built really strong relationships with the engineers I worked with. And we had a really talented team. And as I approached my 30th birthday, I kind of just reflected on the last 10 years. And I thought, you know, how have I grown? What is it that I've achieved? And then what would my next 10 years look like? And, you know, the way I saw it is. You know, I was in the business business. I was in the business business. It was very, very challenging to build the company. You know, I remember being something like 26 years old and losing like a million pounds over the course of a month, which was like a significant amount of my wealth, right? And what kind of assets?",
+      "transcript_translated": "Cool As\u00ed que me encant\u00f3 mucho mi primer negocio. Ten\u00eda mucha libertad. No ten\u00eda ning\u00fan inversor externo. Siempre fue mi dinero o el dinero del equipo lo que hemos reunido. Y as\u00ed fuimos libres de cometer nuestros propios errores, tomar nuestras propias decisiones No ten\u00edamos clientes. Era s\u00f3lo nuestro propio capital que comerciar\u00edamos usando nuestros propios algoritmos Y fue muy, muy simple. Y, ya sabes, constru\u00ed relaciones muy fuertes con los ingenieros con los que trabaj\u00e9 Y ten\u00edamos un equipo muy talentoso. Y cuando me acerqu\u00e9 a mi 30 cumplea\u00f1os, pens\u00e9 en los \u00faltimos 10 a\u00f1os. Y pens\u00e9, ya sabes, c\u00f3mo he crecido \u00bfQu\u00e9 he logrado? Y entonces, \u00bfc\u00f3mo se ver\u00edan mis pr\u00f3ximos 10 a\u00f1os? Y, ya sabes, la forma en que lo vi es Sabes, yo estaba en el negocio Yo estaba en el negocio. Fue muy, muy dif\u00edcil construir la empresa. Recuerdo tener 26 a\u00f1os y perder un mill\u00f3n de libras en el transcurso de un mes, que era una cantidad significativa de mi riqueza, \u00bfverdad? Y qu\u00e9 tipo de activos",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment029_SPEAKER_00_00-08-00.512_00-09-14.290_73.777.mp4",
+        "audio": "audio/segment029_SPEAKER_00_00-08-00.512_00-09-14.290_73.777.wav"
+      }
+    },
+    {
+      "segment_number": 30,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:09:13.699",
+      "end_time": "00:09:15.690",
+      "duration": 1.991,
+      "detected_language": "en",
+      "transcript": "What kind of assets were you trading?",
+      "transcript_translated": "\u00bfQu\u00e9 tipo de activos estabas intercambiando?",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment030_SPEAKER_01_00-09-13.699_00-09-15.690_1.991.mp4",
+        "audio": "audio/segment030_SPEAKER_01_00-09-13.699_00-09-15.690_1.991.wav"
+      }
+    },
+    {
+      "segment_number": 31,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:09:16.787",
+      "end_time": "00:09:20.837",
+      "duration": 4.049,
+      "detected_language": "en",
+      "transcript": "So we were actually betting on sports markets.",
+      "transcript_translated": "As\u00ed que est\u00e1bamos apostando en los mercados deportivos.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment031_SPEAKER_00_00-09-16.787_00-09-20.837_4.049.mp4",
+        "audio": "audio/segment031_SPEAKER_00_00-09-16.787_00-09-20.837_4.049.wav"
+      }
+    },
+    {
+      "segment_number": 32,
+      "speaker": "SPEAKER_01",
+      "start_time": "00:09:20.955",
+      "end_time": "00:09:21.546",
+      "duration": 0.59,
+      "detected_language": "en",
+      "transcript": "Interesting.",
+      "transcript_translated": "Es muy interesante.",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_01/segment032_SPEAKER_01_00-09-20.955_00-09-21.546_0.590.mp4",
+        "audio": "audio/segment032_SPEAKER_01_00-09-20.955_00-09-21.546_0.590.wav"
+      }
+    },
+    {
+      "segment_number": 33,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:09:22.643",
+      "end_time": "00:11:19.030",
+      "duration": 116.386,
+      "detected_language": "en",
+      "transcript": "and you know and that's but that's just one example you know I remember being 24 and not you know not winning any money or earning any money over the course of nine months or something right whenever you're a founder whenever you're building a business in fact in life if you're doing anything that's challenging there's always going you know or anything that pushes that pushes yourself beyond what you're currently capable of doing you're going to fail you're going to be forced to grow um and so I looked over these 10 years and I really loved it it was I loved all the ups I loved the downs and through I felt that I'd grown a lot um and the outcome was a loop a very lucrative business it was lucrative for everyone that was involved and I just thought what did I want to do the next 10 years of my life and I could keep running this sort of um a sort of financial entity which really just all it does is increase my income and I'm not sure what it's actually going to do but I'm going to makes money right which isn't bad you know it's pretty fun um and i and i just thought that seemed very easy it seemed like that was the easy way i'd kind of been through all that hardship i'd learned all of those lessons and i just asked myself the question like what would what would it look like if i wanted to just build the biggest thing i could possibly build have the biggest impact i could possibly have um and just really stretch myself way beyond what i thought i was capable of doing and then with that it was it i had a lot of knowledge about ai uh because all of the all of the trades that we were doing it was entirely informed by ai and machine learning um and so in 2018 um 2019 it was increasingly obvious that large language models were a totally transformational technology um um and i remember just being very aware like",
+      "transcript_translated": "y ya sabes y eso es pero ese es s\u00f3lo un ejemplo sabes que recuerdo que soy 24 y no sabes no ganar ning\u00fan dinero o ganar ning\u00fan dinero en el transcurso de nueve meses o algo as\u00ed correcto cada vez que",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment033_SPEAKER_00_00-09-22.643_00-11-19.030_116.386.mp4",
+        "audio": "audio/segment033_SPEAKER_00_00-09-22.643_00-11-19.030_116.386.wav"
+      }
+    },
+    {
+      "segment_number": 34,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:11:21.055",
+      "end_time": "00:12:38.714",
+      "duration": 77.658,
+      "detected_language": "en",
+      "transcript": "this technology is going to change the world and is going to be something that every person interacts with on a daily basis and i thought to myself it's this there's going to have to exist a platform where not just a single model not a huge monolithic model like the sorts which open ai are creating or the sorts that google are creating but i imagine a world where everyone is going to be there are so many talented people spread across the world they're not just in silicon valley or they're not just in stanford or cambridge but there's talented ai researchers and there's talented engineers across the world and so we'll see many many interesting unique language models and they'll have to exist a platform where they all come together and consumers are able to find the appropriate language model to interact with and so my initial vision was something like maybe it'd be like google where people would kind of search you know i want to speak to a recipe you know i'll speak to a language model that's like a great chef and i thought well maybe there'll be people whose sole existence will be to create the best recipe and chef-like language model",
+      "transcript_translated": "esta tecnolog\u00eda va a cambiar el mundo y va a ser algo con lo que cada persona interact\u00faa a diario y pens\u00e9 en m\u00ed mismo que es esto va a tener que existir una plataforma donde no s\u00f3lo un modelo \u00fanico no un modelo monol\u00edtico enorme como el tipo que abierto ai est\u00e1n creando o el tipo que Google est\u00e1n creando pero me imagino un mundo donde todo el mundo va a estar hay tantas personas talentosas repartidas en todo el mundo no son s\u00f3lo en Silicon Valley o no son s\u00f3lo en Stanford o Cambridge pero hay investigadores talentosos ai y hay ingenieros talentosos en todo el mundo y as\u00ed vamos a ver muchos modelos de lenguaje \u00fanico interesante y tendr\u00e1n que existir una plataforma donde todos se re\u00fanen y los consumidores son capaces de encontrar el modelo de lenguaje apropiado para interactuar y hablar as\u00ed que mi visi\u00f3n inicial fue algo que tal vez sea donde la gente me gustar\u00eda buscar un tipo de receta y un mejor modelo de cocinero que tal vez sea el mejor modelo de la que la gente pueda pensar y hablar",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment034_SPEAKER_00_00-11-21.055_00-12-38.714_77.658.mp4",
+        "audio": "audio/segment034_SPEAKER_00_00-11-21.055_00-12-38.714_77.658.wav"
+      }
+    },
+    {
+      "segment_number": 36,
+      "speaker": "SPEAKER_00",
+      "start_time": "00:12:40.080",
+      "end_time": "00:13:10.101",
+      "duration": 30.02,
+      "detected_language": "en",
+      "transcript": "right? And so what would this platform look like? Maybe it'd look a bit like Google, or maybe it looks something like a YouTube where, you know, there are all these content creators and there are consumers trying to find the right content that they're looking for. And so that's really how Chai got started. It was like this vision and this drive to say, how can we create a platform with a huge array of language models that individuals can discover unique content that's...",
+      "transcript_translated": "\u00bfY as\u00ed que c\u00f3mo se ver\u00eda esta plataforma? Tal vez se pareciera un poco a Google, o tal vez se pareciera algo a YouTube donde, ya sabes, hay todos estos creadores de contenido y hay consumidores tratando de encontrar el contenido correcto que est\u00e1n buscando. Y as\u00ed es realmente como comenz\u00f3 Chai. Fue como esta visi\u00f3n y este impulso para decir, \u00bfc\u00f3mo podemos crear una plataforma con una gran variedad de modelos de lenguaje que las personas pueden descubrir contenido \u00fanico que es...",
+      "target_language": "spanish",
+      "output_files": {
+        "video": "SPEAKER_00/segment036_SPEAKER_00_00-12-40.080_00-13-10.101_30.020.mp4",
+        "audio": "audio/segment036_SPEAKER_00_00-12-40.080_00-13-10.101_30.020.wav"
+      }
+    }
+  ],
+  "segmentation_timestamp": "2025-07-19T21:52:21.419384",
+  "input_files": {
+    "audio": "audio_export/final_audio.wav",
+    "speaker_00_video": "extracted_faces/SPEAKER_00_face_area.mp4",
+    "speaker_01_video": "extracted_faces/SPEAKER_01_face_area.mp4",
+    "transcription": "translated_transcription/translated_transcription.json"
+  }
+}
