@@ -98,15 +98,24 @@ def translate_segments(transcriptions, target_language, output_dir, gpu_id=None,
     print(f"Target language: {target_language} (NLLB code: {target_lang_code})")
     
     # Setup GPU processing
-    available_gpus = setup_multi_gpu_processing()
-    if available_gpus:
-        if gpu_id is None:
-            gpu_id = available_gpus[0]  # Use first available GPU
-        device = get_device(gpu_id)
-        print(f"Using GPU {gpu_id} for NLLB processing")
+    if gpu_id is None:
+        # Automatically select the best GPU with most free VRAM
+        available_gpus = setup_multi_gpu_processing()
+        if available_gpus:
+            from gpu_utils import select_best_gpu
+            gpu_id = select_best_gpu()
+            if gpu_id is not None:
+                device = get_device(gpu_id)
+                print(f"Automatically selected GPU {gpu_id} for NLLB processing")
+            else:
+                device = torch.device("cpu")
+                print("No suitable GPU found, using CPU for NLLB processing")
+        else:
+            device = torch.device("cpu")
+            print("No GPUs available, using CPU for NLLB processing")
     else:
-        device = torch.device("cpu")
-        print("Using CPU for NLLB processing")
+        device = get_device(gpu_id)
+        print(f"Using specified GPU {gpu_id} for NLLB processing")
     
     # Load NLLB model and tokenizer
     print("Loading NLLB model...")

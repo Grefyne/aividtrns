@@ -37,15 +37,24 @@ def transcribe_segments(segments_dir, output_dir, model_name="large", gpu_id=Non
         return False
     
     # Setup GPU processing
-    available_gpus = setup_multi_gpu_processing()
-    if available_gpus:
-        if gpu_id is None:
-            gpu_id = available_gpus[0]  # Use first available GPU
-        device = get_device(gpu_id)
-        print(f"Using GPU {gpu_id} for Whisper processing")
+    if gpu_id is None:
+        # Automatically select the best GPU with most free VRAM
+        available_gpus = setup_multi_gpu_processing()
+        if available_gpus:
+            from gpu_utils import select_best_gpu
+            gpu_id = select_best_gpu()
+            if gpu_id is not None:
+                device = get_device(gpu_id)
+                print(f"Automatically selected GPU {gpu_id} for Whisper processing")
+            else:
+                device = torch.device("cpu")
+                print("No suitable GPU found, using CPU for Whisper processing")
+        else:
+            device = torch.device("cpu")
+            print("No GPUs available, using CPU for Whisper processing")
     else:
-        device = torch.device("cpu")
-        print("Using CPU for Whisper processing")
+        device = get_device(gpu_id)
+        print(f"Using specified GPU {gpu_id} for Whisper processing")
     
     print(f"Loading Whisper model: {model_name}")
     try:

@@ -78,15 +78,24 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
     speaker_samples = load_speaker_samples(speaker_dir)
     
     # Setup GPU processing
-    available_gpus = setup_multi_gpu_processing()
-    if available_gpus:
-        if gpu_id is None:
-            gpu_id = available_gpus[0]  # Use first available GPU
-        device = get_device(gpu_id)
-        print(f"Using GPU {gpu_id} for XTTS processing")
+    if gpu_id is None:
+        # Automatically select the best GPU with most free VRAM
+        available_gpus = setup_multi_gpu_processing()
+        if available_gpus:
+            from gpu_utils import select_best_gpu
+            gpu_id = select_best_gpu()
+            if gpu_id is not None:
+                device = get_device(gpu_id)
+                print(f"Automatically selected GPU {gpu_id} for XTTS processing")
+            else:
+                device = torch.device("cpu")
+                print("No suitable GPU found, using CPU for XTTS processing")
+        else:
+            device = torch.device("cpu")
+            print("No GPUs available, using CPU for XTTS processing")
     else:
-        device = torch.device("cpu")
-        print("Using CPU for XTTS processing")
+        device = get_device(gpu_id)
+        print(f"Using specified GPU {gpu_id} for XTTS processing")
     
     # Initialize XTTS model
     print("Loading XTTS-v2 model...")
@@ -99,29 +108,45 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
         print(f"Error loading XTTS model: {e}")
         return False
     
-    print(f"Generating audio for {len(translations['segments'])} segments...")
+    print(f"Processing {len(translations['segments'])} segments...")
     
     generated_segments = []
+    skipped_segments = []
     
     for i, segment in enumerate(translations['segments']):
         segment_id = segment['segment_id']
         speaker = segment['speaker']
         translated_text = segment['translated_transcription']
+        duration = segment.get('duration', 0)
         
-        print(f"Generating audio for segment {i+1}/{len(translations['segments'])}: {segment_id}")
+        print(f"Processing segment {i+1}/{len(translations['segments'])}: {segment_id}")
         print(f"  Speaker: {speaker}")
+        print(f"  Duration: {duration:.3f}s")
         print(f"  Text: {translated_text}")
+        
+        # Skip segments shorter than 0.5 seconds
+        if duration < 0.5:
+            print(f"  Skipping segment {segment_id} - too short ({duration:.3f}s < 0.5s)")
+            skipped_segments.append({
+                "segment_id": segment_id,
+                "duration": duration,
+                "reason": "too_short"
+            })
+            continue
         
         # Find speaker sample
         speaker_sample = None
         for sample_id, sample_path in speaker_samples.items():
-            if sample_id in speaker or speaker in sample_id:
+            # Match SPEAKER_00 with speaker00, SPEAKER_01 with speaker01, etc.
+            if sample_id in speaker.lower() or speaker.lower().replace('_', '') in sample_id:
                 speaker_sample = sample_path
                 break
         
         if not speaker_sample:
             print(f"  Warning: No speaker sample found for {speaker}")
             continue
+        
+        print(f"  Generating audio for segment {segment_id}...")
         
         # Generate audio with retries
         success = False
@@ -180,22 +205,25 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
         "language": language,
         "total_segments": len(translations['segments']),
         "successful_generations": len(generated_segments),
+        "skipped_segments": len(skipped_segments),
         "confidence_threshold": confidence_threshold,
         "max_retries": max_retries,
-        "generated_segments": generated_segments
+        "generated_segments": generated_segments,
+        "skipped_segments": skipped_segments
     }
     
     report_path = os.path.join(output_dir, "generation_report.json")
-    with open(report_path, 'w') as f:
-        json.dump(report_data, f, indent=2)
+    with open(report_path, 'w', encoding='utf-8') as f:
+        json.dump(report_data, f, indent=2, ensure_ascii=False)
     
     # Copy translated transcription to output directory
     transcription_path = os.path.join(output_dir, "translated_transcription.json")
-    with open(transcription_path, 'w') as f:
-        json.dump(translations, f, indent=2)
+    with open(transcription_path, 'w', encoding='utf-8') as f:
+        json.dump(translations, f, indent=2, ensure_ascii=False)
     
     print(f"\nAudio generation completed!")
     print(f"Successful generations: {len(generated_segments)}/{len(translations['segments'])}")
+    print(f"Skipped segments (< 0.5s): {len(skipped_segments)}")
     print(f"Report saved to: {report_path}")
     
     # Clear GPU cache

@@ -26,15 +26,24 @@ def detect_faces_in_video(video_path, output_dir, padding_ratio=0.3, min_face_si
     print(f"Output directory: {output_dir}")
     
     # Setup GPU processing for OpenCV
-    available_gpus = setup_multi_gpu_processing()
-    if available_gpus:
-        if gpu_id is None:
-            gpu_id = available_gpus[0]  # Use first available GPU
-        print(f"Using GPU {gpu_id} for face detection")
+    if gpu_id is None:
+        # Automatically select the best GPU with most free VRAM
+        available_gpus = setup_multi_gpu_processing()
+        if available_gpus:
+            from gpu_utils import select_best_gpu
+            gpu_id = select_best_gpu()
+            if gpu_id is not None:
+                print(f"Automatically selected GPU {gpu_id} for face detection")
+                # Set OpenCV to use GPU if available
+                cv2.cuda.setDevice(gpu_id)
+            else:
+                print("No suitable GPU found, using CPU for face detection")
+        else:
+            print("No GPUs available, using CPU for face detection")
+    else:
+        print(f"Using specified GPU {gpu_id} for face detection")
         # Set OpenCV to use GPU if available
         cv2.cuda.setDevice(gpu_id)
-    else:
-        print("Using CPU for face detection")
     
     # Load video
     cap = cv2.VideoCapture(video_path)

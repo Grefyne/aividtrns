@@ -42,7 +42,8 @@ def get_gpu_memory_info(device_id: int) -> Tuple[int, int]:
     try:
         torch.cuda.set_device(device_id)
         total_memory = torch.cuda.get_device_properties(device_id).total_memory / 1024**2
-        free_memory = torch.cuda.memory_reserved(device_id) / 1024**2
+        allocated_memory = torch.cuda.memory_allocated(device_id) / 1024**2
+        free_memory = total_memory - allocated_memory
         return int(total_memory), int(free_memory)
     except Exception as e:
         logger.warning(f"Could not get memory info for GPU {device_id}: {e}")
@@ -53,16 +54,24 @@ def select_best_gpu() -> Optional[int]:
     """Select the GPU with the most free memory."""
     available_gpus = get_available_gpus()
     if not available_gpus:
+        logger.warning("No GPUs available")
         return None
     
     best_gpu = None
     max_free_memory = 0
     
+    logger.info("Scanning GPUs for best memory availability:")
     for gpu_id in available_gpus:
         total, free = get_gpu_memory_info(gpu_id)
+        utilization = ((total - free) / total * 100) if total > 0 else 0
+        logger.info(f"  GPU {gpu_id}: {free:,}MB free / {total:,}MB total ({utilization:.1f}% used)")
+        
         if free > max_free_memory:
             max_free_memory = free
             best_gpu = gpu_id
+    
+    if best_gpu is not None:
+        logger.info(f"Selected GPU {best_gpu} with {max_free_memory:,}MB free memory")
     
     return best_gpu
 

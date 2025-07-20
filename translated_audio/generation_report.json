@@ -1,0 +1,9 @@
+{
+  "model_used": "XTTS-v2",
+  "language": "spanish",
+  "total_segments": 37,
+  "successful_generations": 0,
+  "confidence_threshold": 85.0,
+  "max_retries": 5,
+  "generated_segments": []
+}
