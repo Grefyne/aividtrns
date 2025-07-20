@@ -481,7 +481,7 @@ def main():
     parser.add_argument("--speaker-dir", default="speaker_segments",
                        help="Directory containing speaker samples")
     parser.add_argument("--max-retries", type=int, default=5,
-                       help="Maximum retry attempts for audio generation")
+                       help="Maximum retry attempts for audio generation (default: 5)")
     parser.add_argument("--confidence-threshold", type=float, default=85.0,
                        help="Similarity threshold percentage for audio quality verification (default: 85%)")
     parser.add_argument("--gpu-id", type=int, default=None,
