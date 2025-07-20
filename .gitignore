@@ -46,46 +46,12 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Audio/Video processing outputs (excluding specific files)
-audio_export/*.wav
-speaker_segments/*.wav
-transcribed_segments/*.wav
-translated_transcription/*.wav
-translated_segments/*.wav
-translated_audio/*.wav
-vocal_removal_out/*.wav
-speaker_samples/*.wav
-face_area/*.wav
-extracted_faces/*.wav
-latentsync_training_data/*.wav
-temp_latentsync_input/*.wav
-
-# Large external integrations (excluding specific files)
-latentsync_integration/*.wav
-latentsync_integration/*.mp4
-latentsync_integration/*.pt
-latentsync_integration/*.pth
-latentsync_integration/checkpoints/
-last_segments/*.wav
-last_segments/*.mp4
 
 # Model files and checkpoints
 *.pt
 *.pth
 *.ckpt
 *.safetensors
-checkpoints/
-models/
-
-# Large files
-*.wav
-*.mp4
-*.avi
-*.mov
-*.mkv
-*.mp3
-*.flac
-*.m4a
 
 # Configuration files with sensitive data (excluding specific files)
 config/hf_token.txt
