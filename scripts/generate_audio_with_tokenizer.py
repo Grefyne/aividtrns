@@ -10,6 +10,7 @@ import json
 import argparse
 import whisper
 import torch
+import subprocess
 from TTS.api import TTS
 from pathlib import Path
 from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache, parallel_process_with_gpus
@@ -283,6 +284,20 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
                     if similarity_percentage >= confidence_threshold:
                         print(f"  ✅ Audio quality meets threshold ({similarity_percentage:.1f}% >= {confidence_threshold}%)")
                         
+                        # Get actual audio duration
+                        try:
+                            duration_cmd = [
+                                "ffprobe",
+                                "-v", "quiet",
+                                "-show_entries", "format=duration",
+                                "-of", "csv=p=0",
+                                output_path
+                            ]
+                            duration_result = subprocess.run(duration_cmd, capture_output=True, text=True, check=True)
+                            actual_audio_duration = float(duration_result.stdout.strip())
+                        except:
+                            actual_audio_duration = None
+                        
                         generated_segments.append({
                             "segment_id": segment_id,
                             "speaker": speaker,
@@ -293,7 +308,9 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
                             "whisper_verification": verification,
                             "attempts": attempt + 1,
                             "final_similarity": similarity_percentage,
-                            "quality_status": "passed_threshold"
+                            "quality_status": "passed_threshold",
+                            "expected_duration": duration,
+                            "actual_audio_duration": actual_audio_duration
                         })
                         
                         success = True
@@ -348,6 +365,20 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
             import shutil
             shutil.move(best_attempt['temp_file'], final_output_path)
             
+            # Get actual audio duration for best attempt
+            try:
+                duration_cmd = [
+                    "ffprobe",
+                    "-v", "quiet",
+                    "-show_entries", "format=duration",
+                    "-of", "csv=p=0",
+                    final_output_path
+                ]
+                duration_result = subprocess.run(duration_cmd, capture_output=True, text=True, check=True)
+                actual_audio_duration = float(duration_result.stdout.strip())
+            except:
+                actual_audio_duration = None
+            
             generated_segments.append({
                 "segment_id": segment_id,
                 "speaker": speaker,
@@ -358,7 +389,9 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
                 "whisper_verification": best_attempt['verification'],
                 "attempts": max_retries,
                 "final_similarity": best_similarity,
-                "quality_status": "best_below_threshold"
+                "quality_status": "best_below_threshold",
+                "expected_duration": duration,
+                "actual_audio_duration": actual_audio_duration
             })
             
             success = True
@@ -384,11 +417,33 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
         }
     }
     
+    # Calculate duration analysis
+    duration_stats = {
+        "total_expected_duration": 0.0,
+        "total_actual_duration": 0.0,
+        "duration_difference": 0.0,
+        "average_duration_ratio": 0.0,
+        "segments_with_duration": 0
+    }
+    
     if generated_segments:
         total_similarity = 0
+        total_expected = 0
+        total_actual = 0
+        segments_with_duration = 0
+        
         for segment in generated_segments:
             similarity = segment.get('final_similarity', 0)
             total_similarity += similarity
+            
+            # Duration analysis
+            expected_dur = segment.get('expected_duration', 0)
+            actual_dur = segment.get('actual_audio_duration')
+            
+            if expected_dur and actual_dur:
+                total_expected += expected_dur
+                total_actual += actual_dur
+                segments_with_duration += 1
             
             status = segment.get('quality_status', 'unknown')
             if status == 'passed_threshold':
@@ -409,6 +464,15 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
                 quality_stats['similarity_distribution']['below_60%'] += 1
         
         quality_stats['average_similarity'] = total_similarity / len(generated_segments)
+        
+        # Update duration statistics
+        duration_stats.update({
+            "total_expected_duration": total_expected,
+            "total_actual_duration": total_actual,
+            "duration_difference": total_actual - total_expected,
+            "average_duration_ratio": (total_actual / total_expected) if total_expected > 0 else 0,
+            "segments_with_duration": segments_with_duration
+        })
     
     # Save generation report
     report_data = {
@@ -421,7 +485,8 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
         "quality_verification": {
             "confidence_threshold": confidence_threshold,
             "max_retries": max_retries,
-            "quality_statistics": quality_stats
+            "quality_statistics": quality_stats,
+            "duration_analysis": duration_stats
         },
         "text_preprocessing": {
             "abbreviation_expansion": True,
@@ -460,6 +525,13 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
             if count > 0:
                 percentage = (count / len(generated_segments)) * 100
                 print(f"  • {range_name}: {count} segments ({percentage:.1f}%)")
+
+        print(f"\n📊 Duration Analysis:")
+        print(f"  • Total expected duration: {duration_stats['total_expected_duration']:.3f}s")
+        print(f"  • Total actual duration: {duration_stats['total_actual_duration']:.3f}s")
+        print(f"  • Duration difference: {duration_stats['duration_difference']:.3f}s")
+        print(f"  • Average duration ratio (actual/expected): {duration_stats['average_duration_ratio']:.3f}")
+        print(f"  • Segments with expected duration: {duration_stats['segments_with_duration']}")
     
     print(f"\n📁 Report saved to: {report_path}")
     

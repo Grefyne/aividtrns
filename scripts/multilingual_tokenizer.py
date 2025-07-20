@@ -58,8 +58,11 @@ def get_spacy_lang(lang):
         return English()
 
 
-def split_sentence(text, lang, text_split_length=250):
-    """Preprocess the input text and split into manageable chunks."""
+def split_sentence(text, lang, text_split_length=150):
+    """
+    Preprocess the input text and split into manageable chunks.
+    Uses sentence-based splitting with reduced length to prevent TTS truncation.
+    """
     text_splits = []
     
     if text_split_length is not None and len(text) >= text_split_length:
@@ -72,37 +75,141 @@ def split_sentence(text, lang, text_split_length=250):
                 doc = nlp(text)
                 
                 for sentence in doc.sents:
-                    if len(text_splits[-1]) + len(str(sentence)) <= text_split_length:
-                        # if the last sentence + the current sentence is less than the text_split_length
-                        # then add the current sentence to the last sentence
-                        text_splits[-1] += " " + str(sentence)
-                        text_splits[-1] = text_splits[-1].lstrip()
-                    elif len(str(sentence)) > text_split_length:
-                        # if the current sentence is greater than the text_split_length
-                        for line in textwrap.wrap(
-                            str(sentence),
-                            width=text_split_length,
-                            drop_whitespace=True,
-                            break_on_hyphens=False,
-                            tabsize=1,
-                        ):
-                            text_splits.append(str(line))
+                    sentence_text = str(sentence).strip()
+                    if not sentence_text:
+                        continue
+                        
+                    # If current chunk is empty, start with this sentence
+                    if not text_splits[-1]:
+                        if len(sentence_text) <= text_split_length:
+                            text_splits[-1] = sentence_text
+                        else:
+                            # Split long sentence by clauses or phrases
+                            split_long_sentence(sentence_text, text_split_length, text_splits)
+                    elif len(text_splits[-1]) + len(" " + sentence_text) <= text_split_length:
+                        # Add sentence to current chunk if it fits
+                        text_splits[-1] += " " + sentence_text
                     else:
-                        text_splits.append(str(sentence))
+                        # Start new chunk with this sentence
+                        if len(sentence_text) <= text_split_length:
+                            text_splits.append(sentence_text)
+                        else:
+                            # Split long sentence and add to new chunks
+                            split_long_sentence(sentence_text, text_split_length, text_splits)
                 
-                if len(text_splits) > 1:
-                    if text_splits[0] == "":
-                        del text_splits[0]
+                # Clean up empty chunks
+                text_splits = [chunk.strip() for chunk in text_splits if chunk.strip()]
             else:
-                # Fallback to simple splitting
-                text_splits = [text[i:i+text_split_length] for i in range(0, len(text), text_split_length)]
+                # Enhanced fallback when spaCy is not available
+                text_splits = fallback_sentence_split(text, text_split_length)
         else:
-            # Fallback to simple splitting when spaCy is not available
-            text_splits = [text[i:i+text_split_length] for i in range(0, len(text), text_split_length)]
+            # Enhanced fallback when spaCy is not available
+            text_splits = fallback_sentence_split(text, text_split_length)
     else:
-        text_splits = [text.lstrip()]
+        text_splits = [text.strip()]
     
     return text_splits
+
+
+def split_long_sentence(sentence, max_length, text_splits):
+    """Split a long sentence by clauses, phrases, or words."""
+    import re
+    
+    # First try splitting by clauses (commas, semicolons)
+    clause_pattern = r'([,;:])'
+    parts = re.split(clause_pattern, sentence)
+    
+    # Rejoin with punctuation
+    clauses = []
+    i = 0
+    while i < len(parts):
+        if i + 1 < len(parts) and parts[i + 1] in [',', ';', ':']:
+            clauses.append(parts[i] + parts[i + 1])
+            i += 2
+        else:
+            if parts[i].strip():
+                clauses.append(parts[i])
+            i += 1
+    
+    # If we got good clauses, use them
+    if len(clauses) > 1:
+        current_chunk = ""
+        for clause in clauses:
+            clause = clause.strip()
+            if not clause:
+                continue
+                
+            if not current_chunk:
+                current_chunk = clause
+            elif len(current_chunk + " " + clause) <= max_length:
+                current_chunk += " " + clause
+            else:
+                text_splits.append(current_chunk)
+                current_chunk = clause
+        
+        if current_chunk:
+            text_splits.append(current_chunk)
+    else:
+        # Fall back to word wrapping
+        import textwrap
+        for line in textwrap.wrap(
+            sentence,
+            width=max_length,
+            drop_whitespace=True,
+            break_on_hyphens=False,
+            break_long_words=False,
+        ):
+            text_splits.append(line.strip())
+
+
+def fallback_sentence_split(text, max_length):
+    """Enhanced fallback sentence splitting when spaCy is not available."""
+    import re
+    
+    # Split by sentence endings
+    sentences = re.split(r'([.!?]+)', text)
+    
+    # Rejoin sentences with their punctuation
+    clean_sentences = []
+    i = 0
+    while i < len(sentences):
+        if i + 1 < len(sentences) and re.match(r'[.!?]+', sentences[i + 1]):
+            clean_sentences.append(sentences[i] + sentences[i + 1])
+            i += 2
+        else:
+            if sentences[i].strip():
+                clean_sentences.append(sentences[i])
+            i += 1
+    
+    # Build chunks from sentences
+    text_splits = []
+    current_chunk = ""
+    
+    for sentence in clean_sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+            
+        if len(sentence) > max_length:
+            # Add current chunk if it exists
+            if current_chunk:
+                text_splits.append(current_chunk)
+                current_chunk = ""
+            
+            # Split long sentence
+            split_long_sentence(sentence, max_length, text_splits)
+        elif not current_chunk:
+            current_chunk = sentence
+        elif len(current_chunk + " " + sentence) <= max_length:
+            current_chunk += " " + sentence
+        else:
+            text_splits.append(current_chunk)
+            current_chunk = sentence
+    
+    if current_chunk:
+        text_splits.append(current_chunk)
+    
+    return text_splits if text_splits else [text]
 
 
 # List of (regular expression, replacement) pairs for abbreviations:
@@ -433,7 +540,7 @@ class MultilingualTokenizer:
     
     def __init__(self, language="en"):
         self.language = language
-        self.text_split_length = 250
+        self.text_split_length = 150
     
     def preprocess_text(self, text):
         """Complete text preprocessing pipeline."""
@@ -472,7 +579,7 @@ class MultilingualTokenizer:
         self.text_split_length = length
 
 
-def tokenize_for_xtts(text, language="en", max_length=250):
+def tokenize_for_xtts(text, language="en", max_length=150):
     """Convenience function to tokenize text for XTTS-v2."""
     tokenizer = MultilingualTokenizer(language)
     tokenizer.set_text_split_length(max_length)
