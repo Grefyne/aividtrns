@@ -88,8 +88,10 @@ def build_merged_audio(transcription, audio_dir, output_path):
                 elif gap_duration < 0:
                     print(f"  Warning: Negative gap ({gap_duration:.3f}s) before {segment_id} - segments may overlap")
             
-            # Look for the audio file
-            audio_filename = f"{segment_id}_{speaker}_{start_time_str}_{end_time_str}_{duration_str}.wav"
+            # Look for the audio file (match the actual format from the generator)
+            # The generator creates files with hyphens in duration like "3-226" instead of "03.226"
+            duration_formatted = f"{segment['duration']:.3f}".replace('.', '-')
+            audio_filename = f"{segment_id}_{speaker}_{start_time_str}_{end_time_str}_{duration_formatted}.wav"
             audio_path = os.path.join(audio_dir, audio_filename)
             
             if os.path.exists(audio_path):
