@@ -9,6 +9,7 @@ import sys
 import json
 import argparse
 import torch
+import re
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache, parallel_process_with_gpus
 
@@ -21,6 +22,15 @@ def load_transcriptions(input_file):
     
     with open(input_file, 'r') as f:
         return json.load(f)
+
+
+def split_into_sentences(text):
+    """Split text into sentences using regex."""
+    # Split on sentence endings followed by space or end of string
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    # Filter out empty sentences and clean up
+    sentences = [s.strip() for s in sentences if s.strip()]
+    return sentences
 
 
 def get_nllb_language_code(language):
@@ -112,22 +122,14 @@ def translate_segments(transcriptions, target_language, output_dir, gpu_id=None,
     
     print(f"Translating {len(transcriptions['segments'])} segments...")
     
-    if use_parallel and len(available_gpus) > 1:
-        print(f"Using parallel processing across {len(available_gpus)} GPUs")
-        translated_segments = parallel_process_with_gpus(
-            lambda segment: _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language),
-            transcriptions['segments'],
-            num_gpus=len(available_gpus)
-        )
-        # Filter out None results
-        translated_segments = [seg for seg in translated_segments if seg is not None]
-    else:
-        translated_segments = []
-        
-        for i, segment in enumerate(transcriptions['segments']):
-            result = _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language, i+1, len(transcriptions['segments']))
-            if result:
-                translated_segments.append(result)
+    # For now, use sequential processing to avoid pickling issues with models
+    # TODO: Implement proper parallel processing with model loading per process
+    translated_segments = []
+    
+    for i, segment in enumerate(transcriptions['segments']):
+        result = _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language, model_name, i+1, len(transcriptions['segments']))
+        if result:
+            translated_segments.append(result)
     
     # Save translations
     output_data = {
@@ -140,8 +142,8 @@ def translate_segments(transcriptions, target_language, output_dir, gpu_id=None,
     }
     
     output_path = os.path.join(output_dir, "translated_transcription.json")
-    with open(output_path, 'w') as f:
-        json.dump(output_data, f, indent=2)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(output_data, f, indent=2, ensure_ascii=False)
     
     print(f"\nTranslation completed!")
     print(f"Translated segments: {len(translated_segments)}/{len(transcriptions['segments'])}")
@@ -154,8 +156,8 @@ def translate_segments(transcriptions, target_language, output_dir, gpu_id=None,
     return True
 
 
-def _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language, segment_num=None, total_segments=None):
-    """Translate a single segment."""
+def _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language, model_name, segment_num=None, total_segments=None):
+    """Translate a single segment by chunking into sentences."""
     if segment_num and total_segments:
         print(f"Translating segment {segment_num}/{total_segments}: {segment['segment_id']}")
     else:
@@ -167,23 +169,59 @@ def _translate_single_segment(segment, tokenizer, model, device, target_lang_cod
         return None
     
     try:
-        # Tokenize input text
-        inputs = tokenizer(original_text, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        # Split text into sentences
+        sentences = split_into_sentences(original_text)
+        if not sentences:
+            print(f"  No valid sentences found for {segment['segment_id']}")
+            return None
         
-        # Move inputs to device
-        inputs = {k: v.to(device) for k, v in inputs.items()}
+        print(f"  Processing {len(sentences)} sentences")
         
-        # Generate translation with target language token
-        translated_tokens = model.generate(
-            **inputs,
-            forced_bos_token_id=tokenizer.convert_tokens_to_ids(f"__{target_lang_code}__"),
-            max_length=512,
-            num_beams=5,
-            early_stopping=True
-        )
+        # Translate each sentence
+        translated_sentences = []
+        for i, sentence in enumerate(sentences):
+            if not sentence.strip():
+                continue
+                
+            try:
+                # Tokenize input text for NLLB
+                max_input_length = 512
+                max_output_length = 512
+                
+                inputs = tokenizer(sentence, return_tensors="pt", padding=True, truncation=True, max_length=max_input_length)
+                
+                # Move inputs to device
+                inputs = {k: v.to(device) for k, v in inputs.items()}
+                
+                # Generate translation with NLLB using transformers pipeline method
+                # Set the source and target language tokens
+                tokenizer.src_lang = "eng_Latn"
+                tokenizer.tgt_lang = target_lang_code
+                
+                translated_tokens = model.generate(
+                    **inputs,
+                    forced_bos_token_id=tokenizer.convert_tokens_to_ids(target_lang_code),
+                    max_length=max_output_length,
+                    num_beams=5,
+                    early_stopping=True,
+                    do_sample=False
+                )
+                
+                # Decode translation
+                translated_sentence = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
+                translated_sentences.append(translated_sentence)
+                
+                if segment_num and total_segments:
+                    print(f"    Sentence {i+1}: {sentence}")
+                    print(f"    Translated: {translated_sentence}")
+                    
+            except Exception as e:
+                print(f"    Error translating sentence {i+1}: {e}")
+                # Keep original sentence if translation fails
+                translated_sentences.append(sentence)
         
-        # Decode translation
-        translated_text = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
+        # Join translated sentences
+        translated_text = " ".join(translated_sentences)
         
         # Create translated segment entry
         translated_entry = {
