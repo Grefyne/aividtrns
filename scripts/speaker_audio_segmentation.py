@@ -13,6 +13,7 @@ from pathlib import Path
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 import torch
+from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache
 
 
 def load_hf_token():
@@ -27,7 +28,7 @@ def load_hf_token():
         return None
 
 
-def perform_speaker_segmentation(audio_path, output_dir="speaker_segments"):
+def perform_speaker_segmentation(audio_path, output_dir="speaker_segments", gpu_id=None):
     """Perform speaker diarization using pyannote.audio."""
     
     # Create output directory
@@ -42,6 +43,17 @@ def perform_speaker_segmentation(audio_path, output_dir="speaker_segments"):
     print(f"Performing speaker segmentation on: {audio_path}")
     print(f"Output directory: {output_dir}")
     
+    # Setup GPU processing
+    available_gpus = setup_multi_gpu_processing()
+    if available_gpus:
+        if gpu_id is None:
+            gpu_id = available_gpus[0]  # Use first available GPU
+        device = get_device(gpu_id)
+        print(f"Using GPU {gpu_id} for processing")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU for processing")
+    
     try:
         # Initialize pipeline
         pipeline = Pipeline.from_pretrained(
@@ -49,12 +61,8 @@ def perform_speaker_segmentation(audio_path, output_dir="speaker_segments"):
             use_auth_token=hf_token
         )
         
-        # Move to GPU if available
-        if torch.cuda.is_available():
-            pipeline = pipeline.to(torch.device("cuda"))
-            print("Using GPU for processing")
-        else:
-            print("Using CPU for processing")
+        # Move to appropriate device
+        pipeline = pipeline.to(device)
         
         # Perform diarization
         with ProgressHook() as hook:
@@ -134,10 +142,17 @@ def perform_speaker_segmentation(audio_path, output_dir="speaker_segments"):
         # Extract individual audio segments
         extract_audio_segments(audio_path, merged_segments, output_dir)
         
+        # Clear GPU cache
+        if available_gpus:
+            clear_gpu_cache(gpu_id)
+        
         return True
         
     except Exception as e:
         print(f"Error during speaker segmentation: {e}")
+        # Clear GPU cache on error
+        if available_gpus:
+            clear_gpu_cache(gpu_id)
         return False
 
 
@@ -183,6 +198,8 @@ def main():
     parser.add_argument("audio_path", help="Path to input audio file")
     parser.add_argument("--output-dir", default="speaker_segments", 
                        help="Output directory for segments")
+    parser.add_argument("--gpu-id", type=int, default=None,
+                       help="Specific GPU ID to use (default: auto-select)")
     args = parser.parse_args()
     
     # Check if input file exists
@@ -191,7 +208,7 @@ def main():
         sys.exit(1)
     
     # Perform segmentation
-    success = perform_speaker_segmentation(args.audio_path, args.output_dir)
+    success = perform_speaker_segmentation(args.audio_path, args.output_dir, args.gpu_id)
     
     if not success:
         print("Speaker segmentation failed!")

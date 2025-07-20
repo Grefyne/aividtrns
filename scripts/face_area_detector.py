@@ -11,10 +11,12 @@ import argparse
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 from pathlib import Path
+from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache
 
 
-def detect_faces_in_video(video_path, output_dir, padding_ratio=0.3, min_face_size=30):
+def detect_faces_in_video(video_path, output_dir, padding_ratio=0.3, min_face_size=30, gpu_id=None):
     """Detect faces in video and analyze face areas."""
     
     # Create output directory
@@ -22,6 +24,17 @@ def detect_faces_in_video(video_path, output_dir, padding_ratio=0.3, min_face_si
     
     print(f"Analyzing face areas in video: {video_path}")
     print(f"Output directory: {output_dir}")
+    
+    # Setup GPU processing for OpenCV
+    available_gpus = setup_multi_gpu_processing()
+    if available_gpus:
+        if gpu_id is None:
+            gpu_id = available_gpus[0]  # Use first available GPU
+        print(f"Using GPU {gpu_id} for face detection")
+        # Set OpenCV to use GPU if available
+        cv2.cuda.setDevice(gpu_id)
+    else:
+        print("Using CPU for face detection")
     
     # Load video
     cap = cv2.VideoCapture(video_path)
@@ -140,6 +153,10 @@ def detect_faces_in_video(video_path, output_dir, padding_ratio=0.3, min_face_si
     
     # Create visualizations
     create_face_area_visualizations(analysis_results, output_dir)
+    
+    # Clear GPU cache
+    if available_gpus:
+        clear_gpu_cache(gpu_id)
     
     return True
 
@@ -345,6 +362,8 @@ def main():
                        help="Padding ratio around detected faces")
     parser.add_argument("--min-face-size", type=int, default=30,
                        help="Minimum face size for detection")
+    parser.add_argument("--gpu-id", type=int, default=None,
+                       help="Specific GPU ID to use (default: auto-select)")
     args = parser.parse_args()
     
     # Check if input file exists
@@ -354,7 +373,7 @@ def main():
     
     # Perform face area detection
     success = detect_faces_in_video(args.video_path, args.output_dir, 
-                                  args.padding_ratio, args.min_face_size)
+                                  args.padding_ratio, args.min_face_size, args.gpu_id)
     
     if not success:
         print("Face area detection failed!")

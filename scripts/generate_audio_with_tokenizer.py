@@ -12,6 +12,7 @@ import whisper
 import torch
 from TTS.api import TTS
 from pathlib import Path
+from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache, parallel_process_with_gpus
 
 
 def load_translations(input_file):
@@ -42,10 +43,12 @@ def load_speaker_samples(speaker_dir):
     return speaker_samples
 
 
-def verify_transcription_with_whisper(audio_path, expected_text, language="en"):
+def verify_transcription_with_whisper(audio_path, expected_text, language="en", device=None):
     """Verify generated audio transcription using Whisper."""
     try:
         model = whisper.load_model("base")
+        if device and hasattr(model, 'to'):
+            model = model.to(device)
         result = model.transcribe(audio_path, language=language)
         transcribed_text = result['text'].strip().lower()
         expected_text_lower = expected_text.lower()
@@ -65,7 +68,7 @@ def verify_transcription_with_whisper(audio_path, expected_text, language="en"):
         return None
 
 
-def generate_translated_audio(translations, output_dir, language, speaker_dir, max_retries=5, confidence_threshold=85.0):
+def generate_translated_audio(translations, output_dir, language, speaker_dir, max_retries=5, confidence_threshold=85.0, gpu_id=None, use_parallel=False):
     """Generate translated audio using XTTS-v2."""
     
     # Create output directory
@@ -74,10 +77,24 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
     # Load speaker samples
     speaker_samples = load_speaker_samples(speaker_dir)
     
+    # Setup GPU processing
+    available_gpus = setup_multi_gpu_processing()
+    if available_gpus:
+        if gpu_id is None:
+            gpu_id = available_gpus[0]  # Use first available GPU
+        device = get_device(gpu_id)
+        print(f"Using GPU {gpu_id} for XTTS processing")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU for XTTS processing")
+    
     # Initialize XTTS model
     print("Loading XTTS-v2 model...")
     try:
         tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+        # XTTS automatically uses GPU if available, but we can set device explicitly
+        if hasattr(tts, 'to') and device.type == 'cuda':
+            tts = tts.to(device)
     except Exception as e:
         print(f"Error loading XTTS model: {e}")
         return False
@@ -122,7 +139,7 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
                 )
                 
                 # Verify with Whisper
-                verification = verify_transcription_with_whisper(output_path, translated_text, language)
+                verification = verify_transcription_with_whisper(output_path, translated_text, language, device)
                 
                 if verification and verification['similarity'] > 0.7:
                     print(f"  Audio generated successfully (attempt {attempt + 1})")
@@ -181,6 +198,10 @@ def generate_translated_audio(translations, output_dir, language, speaker_dir, m
     print(f"Successful generations: {len(generated_segments)}/{len(translations['segments'])}")
     print(f"Report saved to: {report_path}")
     
+    # Clear GPU cache
+    if available_gpus:
+        clear_gpu_cache(gpu_id)
+    
     return True
 
 
@@ -198,6 +219,10 @@ def main():
                        help="Maximum retry attempts for audio generation")
     parser.add_argument("--confidence-threshold", type=float, default=85.0,
                        help="Confidence threshold for Whisper verification")
+    parser.add_argument("--gpu-id", type=int, default=None,
+                       help="Specific GPU ID to use (default: auto-select)")
+    parser.add_argument("--parallel", action="store_true",
+                       help="Use parallel processing across multiple GPUs")
     args = parser.parse_args()
     
     # Check if input file exists
@@ -217,7 +242,9 @@ def main():
         args.language, 
         args.speaker_dir,
         args.max_retries,
-        args.confidence_threshold
+        args.confidence_threshold,
+        args.gpu_id,
+        args.parallel
     )
     
     if not success:

@@ -51,6 +51,7 @@ if ! command -v python &> /dev/null; then
     exit 1
 fi
 
+
 # Check if required scripts exist
 check_file "scripts/cleanup.py"
 check_file "scripts/extract_audio.py"
@@ -189,7 +190,7 @@ fi
 print_status "Step 2/8: Performing speaker audio segmentation..."
 echo "------------------------------------------------------------"
 
-if python scripts/speaker_audio_segmentation.py "$AUDIO_FILE"; then
+if python scripts/speaker_audio_segmentation.py "$AUDIO_FILE" --gpu-id 0; then
     print_success "Speaker audio segmentation completed successfully"
 else
     print_error "Speaker audio segmentation failed"
@@ -202,7 +203,7 @@ echo
 print_status "Step 3/8: Transcribing audio segments using Whisper..."
 echo "------------------------------------------------------------"
 
-if python scripts/transcribe_segments.py --segments_dir "speaker_segments" --output_dir "transcribed_segments" --model "large"; then
+if python scripts/transcribe_segments.py --segments_dir "speaker_segments" --output_dir "transcribed_segments" --model "large" --gpu-id 1 --parallel; then
     print_success "Audio segment transcription completed successfully"
 else
     print_error "Audio segment transcription failed"
@@ -228,7 +229,7 @@ echo
 print_status "Step 5/8: Translating transcribed segments using NLLB..."
 echo "------------------------------------------------------------"
 
-if python scripts/translate_segments.py "$TARGET_LANGUAGE" --input_file "transcribed_segments/transcribed_segments.json" --output_dir "translated_transcription"; then
+if python scripts/translate_segments.py "$TARGET_LANGUAGE" --input_file "transcribed_segments/transcribed_segments.json" --output_dir "translated_transcription" --gpu-id 0 --parallel; then
     print_success "Segment translation completed successfully"
 else
     print_error "Segment translation failed"
@@ -241,7 +242,7 @@ echo
 print_status "Step 6/8: Generating translated audio with XTTS-v2 and Whisper verification..."
 echo "------------------------------------------------------------"
 
-if python scripts/generate_audio_with_tokenizer.py --input "translated_transcription/translated_transcription.json" --output "translated_segments" --language "$TARGET_LANGUAGE" --speaker-dir "speaker_segments" --max-retries 5 --confidence-threshold 85.0; then
+if python scripts/generate_audio_with_tokenizer.py --input "translated_transcription/translated_transcription.json" --output "translated_segments" --language "$TARGET_LANGUAGE" --speaker-dir "speaker_segments" --max-retries 5 --confidence-threshold 85.0 --gpu-id 1; then
     print_success "Translated audio generation completed successfully"
 else
     print_error "Translated audio generation failed"
@@ -293,7 +294,7 @@ echo
 print_status "Step 10/11: Analyzing face areas in video for speaker positioning..."
 echo "------------------------------------------------------------"
 
-if python scripts/face_area_detector.py "$INPUT_VIDEO" --output-dir "face_area" --padding-ratio 0.3 --min-face-size 30; then
+if python scripts/face_area_detector.py "$INPUT_VIDEO" --output-dir "face_area" --padding-ratio 0.3 --min-face-size 30 --gpu-id 0; then
     print_success "Face area detection completed successfully"
 else
     print_error "Face area detection failed"

@@ -8,7 +8,9 @@ import os
 import sys
 import json
 import argparse
+import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache, parallel_process_with_gpus
 
 
 def load_transcriptions(input_file):
@@ -75,7 +77,7 @@ def get_nllb_language_code(language):
         return f"{language_lower}_Latn"
 
 
-def translate_segments(transcriptions, target_language, output_dir):
+def translate_segments(transcriptions, target_language, output_dir, gpu_id=None, use_parallel=False):
     """Translate transcribed segments using NLLB."""
     
     # Create output directory
@@ -85,69 +87,47 @@ def translate_segments(transcriptions, target_language, output_dir):
     target_lang_code = get_nllb_language_code(target_language)
     print(f"Target language: {target_language} (NLLB code: {target_lang_code})")
     
+    # Setup GPU processing
+    available_gpus = setup_multi_gpu_processing()
+    if available_gpus:
+        if gpu_id is None:
+            gpu_id = available_gpus[0]  # Use first available GPU
+        device = get_device(gpu_id)
+        print(f"Using GPU {gpu_id} for NLLB processing")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU for NLLB processing")
+    
     # Load NLLB model and tokenizer
     print("Loading NLLB model...")
     try:
         model_name = "facebook/nllb-200-distilled-600M"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        # Move model to device
+        model = model.to(device)
     except Exception as e:
         print(f"Error loading NLLB model: {e}")
         return False
     
     print(f"Translating {len(transcriptions['segments'])} segments...")
     
-    translated_segments = []
-    
-    for i, segment in enumerate(transcriptions['segments']):
-        print(f"Translating segment {i+1}/{len(transcriptions['segments'])}: {segment['segment_id']}")
+    if use_parallel and len(available_gpus) > 1:
+        print(f"Using parallel processing across {len(available_gpus)} GPUs")
+        translated_segments = parallel_process_with_gpus(
+            lambda segment: _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language),
+            transcriptions['segments'],
+            num_gpus=len(available_gpus)
+        )
+        # Filter out None results
+        translated_segments = [seg for seg in translated_segments if seg is not None]
+    else:
+        translated_segments = []
         
-        original_text = segment['transcription']
-        if not original_text.strip():
-            print(f"  Skipping empty transcription for {segment['segment_id']}")
-            continue
-        
-        try:
-            # Tokenize input text
-            inputs = tokenizer(original_text, return_tensors="pt", padding=True, truncation=True, max_length=512)
-            
-            # Generate translation with target language token
-            translated_tokens = model.generate(
-                **inputs,
-                forced_bos_token_id=tokenizer.convert_tokens_to_ids(f"__{target_lang_code}__"),
-                max_length=512,
-                num_beams=5,
-                early_stopping=True
-            )
-            
-            # Decode translation
-            translated_text = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
-            
-            # Create translated segment entry
-            translated_entry = {
-                "segment_id": segment['segment_id'],
-                "speaker": segment['speaker'],
-                "start_time": segment['start_time'],
-                "end_time": segment['end_time'],
-                "duration": segment['duration'],
-                "start_time_str": segment['start_time_str'],
-                "end_time_str": segment['end_time_str'],
-                "duration_str": segment['duration_str'],
-                "audio_file": segment['audio_file'],
-                "original_transcription": original_text,
-                "translated_transcription": translated_text,
-                "source_language": segment.get('language', 'en'),
-                "target_language": target_language,
-                "target_language_code": target_lang_code
-            }
-            
-            translated_segments.append(translated_entry)
-            print(f"  Original: {original_text}")
-            print(f"  Translated: {translated_text}")
-            
-        except Exception as e:
-            print(f"  Error translating {segment['segment_id']}: {e}")
-            continue
+        for i, segment in enumerate(transcriptions['segments']):
+            result = _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language, i+1, len(transcriptions['segments']))
+            if result:
+                translated_segments.append(result)
     
     # Save translations
     output_data = {
@@ -167,7 +147,71 @@ def translate_segments(transcriptions, target_language, output_dir):
     print(f"Translated segments: {len(translated_segments)}/{len(transcriptions['segments'])}")
     print(f"Output saved to: {output_path}")
     
+    # Clear GPU cache
+    if available_gpus:
+        clear_gpu_cache(gpu_id)
+    
     return True
+
+
+def _translate_single_segment(segment, tokenizer, model, device, target_lang_code, target_language, segment_num=None, total_segments=None):
+    """Translate a single segment."""
+    if segment_num and total_segments:
+        print(f"Translating segment {segment_num}/{total_segments}: {segment['segment_id']}")
+    else:
+        print(f"Translating segment: {segment['segment_id']}")
+    
+    original_text = segment['transcription']
+    if not original_text.strip():
+        print(f"  Skipping empty transcription for {segment['segment_id']}")
+        return None
+    
+    try:
+        # Tokenize input text
+        inputs = tokenizer(original_text, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        
+        # Move inputs to device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        
+        # Generate translation with target language token
+        translated_tokens = model.generate(
+            **inputs,
+            forced_bos_token_id=tokenizer.convert_tokens_to_ids(f"__{target_lang_code}__"),
+            max_length=512,
+            num_beams=5,
+            early_stopping=True
+        )
+        
+        # Decode translation
+        translated_text = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
+        
+        # Create translated segment entry
+        translated_entry = {
+            "segment_id": segment['segment_id'],
+            "speaker": segment['speaker'],
+            "start_time": segment['start_time'],
+            "end_time": segment['end_time'],
+            "duration": segment['duration'],
+            "start_time_str": segment['start_time_str'],
+            "end_time_str": segment['end_time_str'],
+            "duration_str": segment['duration_str'],
+            "audio_file": segment['audio_file'],
+            "original_transcription": original_text,
+            "translated_transcription": translated_text,
+            "source_language": segment.get('language', 'en'),
+            "target_language": target_language,
+            "target_language_code": target_lang_code
+        }
+        
+        if segment_num and total_segments:
+            print(f"  Original: {original_text}")
+            print(f"  Translated: {translated_text}")
+        
+        return translated_entry
+        
+    except Exception as e:
+        print(f"  Error translating {segment['segment_id']}: {e}")
+        return None
 
 
 def main():
@@ -177,6 +221,10 @@ def main():
                        help="Path to transcribed segments JSON file")
     parser.add_argument("--output_dir", default="translated_transcription",
                        help="Output directory for translations")
+    parser.add_argument("--gpu-id", type=int, default=None,
+                       help="Specific GPU ID to use (default: auto-select)")
+    parser.add_argument("--parallel", action="store_true",
+                       help="Use parallel processing across multiple GPUs")
     args = parser.parse_args()
     
     # Check if input file exists
@@ -190,7 +238,7 @@ def main():
         sys.exit(1)
     
     # Perform translation
-    success = translate_segments(transcriptions, args.target_language, args.output_dir)
+    success = translate_segments(transcriptions, args.target_language, args.output_dir, args.gpu_id, args.parallel)
     
     if not success:
         print("Translation failed!")
