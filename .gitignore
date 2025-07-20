@@ -48,6 +48,7 @@ Thumbs.db
 
 
 # Model files and checkpoints
+latentsync_integration/checkpoints/auxiliary/models/
 *.pt
 *.pth
 *.ckpt

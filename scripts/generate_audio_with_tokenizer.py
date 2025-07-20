@@ -522,6 +522,32 @@ def main():
         original_load = torch.load
         torch.load = lambda *args, **kwargs: original_load(*args, **kwargs, weights_only=False) if 'weights_only' not in kwargs else original_load(*args, **kwargs)
         
+        # Fix GPT2InferenceModel compatibility issue
+        try:
+            import transformers
+            from transformers import GPT2LMHeadModel
+            
+            # Check if we need to patch the generate method
+            try:
+                from TTS.tts.utils.synthesis import Synthesizer
+                from TTS.tts.models.xtts import Xtts
+                
+                # Monkey patch the missing generate method for GPT2InferenceModel
+                if hasattr(transformers, 'models') and hasattr(transformers.models, 'gpt2'):
+                    gpt2_model = transformers.models.gpt2.modeling_gpt2.GPT2LMHeadModel
+                    if not hasattr(gpt2_model, 'generate'):
+                        def generate_method(self, *args, **kwargs):
+                            # Use the parent class generate method
+                            return super(type(self), self).generate(*args, **kwargs)
+                        gpt2_model.generate = generate_method
+                        print("  🔧 Applied GPT2InferenceModel.generate compatibility fix")
+                        
+            except Exception as e:
+                print(f"  ⚠️  Could not apply GPT2 patch: {e}")
+                
+        except Exception as e:
+            print(f"  ⚠️  GPT2 compatibility check failed: {e}")
+        
         tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
         
         # Restore original torch.load
