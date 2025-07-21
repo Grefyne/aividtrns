@@ -63,19 +63,27 @@ def get_language_char_limit(language):
 def preprocess_text_enhanced(text, language):
     """
     Enhanced text preprocessing using the multilingual tokenizer.
+    Now aggressively normalizes punctuation to reduce unnecessary pauses.
     """
+    import re
     if not text or not text.strip():
         return ""
     
     # Use the comprehensive multilingual cleaner
     cleaned_text = multilingual_cleaners(text, language)
     
-    # Additional cleanup for TTS stability
-    # Remove excessive punctuation that can cause issues
-    cleaned_text = re.sub(r'\.{3,}', '...', cleaned_text)  # Normalize ellipsis
-    cleaned_text = re.sub(r'[!]{2,}', '!', cleaned_text)   # Reduce multiple exclamations
-    cleaned_text = re.sub(r'[?]{2,}', '?', cleaned_text)   # Reduce multiple questions
-    
+    # Aggressive punctuation normalization
+    # Replace ellipses and multiple periods with a single period
+    cleaned_text = re.sub(r'\.{2,}', '.', cleaned_text)
+    # Remove multiple exclamation/question marks
+    cleaned_text = re.sub(r'[!]{2,}', '!', cleaned_text)
+    cleaned_text = re.sub(r'[?]{2,}', '?', cleaned_text)
+    # Remove all commas (optional, can be adjusted)
+    cleaned_text = cleaned_text.replace(',', '')
+    # Remove any stray semicolons
+    cleaned_text = cleaned_text.replace(';', '')
+    # Remove double spaces
+    cleaned_text = re.sub(r'\s{2,}', ' ', cleaned_text)
     # Ensure proper sentence endings for better TTS flow
     if cleaned_text and not cleaned_text[-1] in '.!?':
         cleaned_text += '.'
@@ -282,7 +290,7 @@ def verify_transcription_with_whisper(audio_path, expected_text, language="en", 
 
 
 def generate_audio_segment(tts, segment, speaker_sample, language, output_dir, 
-                          max_retries=5, confidence_threshold=85.0):
+                          max_retries=5, confidence_threshold=85.0, speed=1.25):
     """
     Generate audio for a single segment with quality verification and retry logic.
     """
@@ -352,19 +360,25 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                     chunk_filename = f"chunk{i+1}_attempt{attempt + 1}.wav"
                     chunk_path = os.path.join(temp_dir, chunk_filename)
                     
-                    # Generate with maximum quality settings
+                    # Generate with maximum quality settings and natural speed
                     tts.tts_to_file(
                         text=chunk,
                         speaker_wav=speaker_sample,
                         language=language,
-                        file_path=chunk_path,
-                        temperature=0.65,           # Stability
-                        repetition_penalty=5.0,    # Reduce artifacts
-                        top_k=20,                  # Higher quality
-                        top_p=0.75,                # Predictable output
-                        split_sentences=True       # Enhanced processing
+                        file_path=chunk_path
                     )
-                    chunk_files.append(chunk_path)
+                    # Trim leading/trailing silence from chunk using ffmpeg
+                    trimmed_chunk_path = os.path.join(temp_dir, f"trimmed_{chunk_filename}")
+                    trim_cmd = [
+                        "ffmpeg", "-y", "-i", chunk_path,
+                        "-af", "silenceremove=start_periods=1:start_silence=0.1:start_threshold=-40dB:stop_periods=1:stop_silence=0.1:stop_threshold=-40dB",
+                        trimmed_chunk_path
+                    ]
+                    subprocess.run(trim_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                    # Remove the original untrimmed chunk
+                    if os.path.exists(chunk_path):
+                        os.remove(chunk_path)
+                    chunk_files.append(trimmed_chunk_path)
                 
                 # Concatenate chunks using FFmpeg
                 print(f"    🔗 Concatenating {len(chunk_files)} chunks...")
@@ -392,12 +406,7 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                     text=combined_text,
                     speaker_wav=speaker_sample,
                     language=language,
-                    file_path=temp_output_path,
-                    temperature=0.65,           # Stability
-                    repetition_penalty=5.0,    # Reduce artifacts
-                    top_k=20,                  # Higher quality
-                    top_p=0.75,                # Predictable output
-                    split_sentences=True       # Enhanced processing
+                    file_path=temp_output_path
                 )
             
             # Get actual audio duration
@@ -502,6 +511,7 @@ def main():
     parser.add_argument('--speaker-dir', required=True, help='Directory containing speaker samples')
     parser.add_argument('--max-retries', type=int, default=5, help='Maximum retry attempts per segment')
     parser.add_argument('--confidence-threshold', type=float, default=85.0, help='Quality threshold percentage')
+    parser.add_argument('--speed', type=float, default=1.25, help='Speech speed multiplier (1.0 = normal, 1.25 = 25% faster)')
     parser.add_argument('--gpu-id', type=int, help='Specific GPU ID to use')
     parser.add_argument('--parallel', action='store_true', help='Use parallel processing (experimental)')
     
@@ -579,6 +589,7 @@ def main():
         print("  • Top-k: 20 (higher quality)")
         print("  • Top-p: 0.75 (more predictable)")
         print("  • Split sentences: enabled (better quality)")
+        print("  • Speed: {:.2f}x (natural speech pace)".format(args.speed))
         print("  • Enhanced multilingual tokenizer: enabled")
         print("  • Advanced anti-truncation: enabled")
         
@@ -616,7 +627,7 @@ def main():
         # Generate audio
         result = generate_audio_segment(
             tts, segment, speaker_sample, args.language, args.output,
-            args.max_retries, args.confidence_threshold
+            args.max_retries, args.confidence_threshold, args.speed
         )
         
         if result:

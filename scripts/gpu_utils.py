@@ -50,29 +50,37 @@ def get_gpu_memory_info(device_id: int) -> Tuple[int, int]:
         return 0, 0
 
 
-def select_best_gpu() -> Optional[int]:
-    """Select the GPU with the most free memory."""
+def select_best_gpu(min_free_mb: int = 2000) -> Optional[int]:
+    """Select the best GPU for single-GPU use: prefer GPU 1 if it has enough free memory, else GPU 0 if it does, else the GPU with the most free memory."""
     available_gpus = get_available_gpus()
     if not available_gpus:
         logger.warning("No GPUs available")
         return None
-    
+    # Prefer GPU 1 if it has enough free memory
+    if 1 in available_gpus:
+        total1, free1 = get_gpu_memory_info(1)
+        if free1 >= min_free_mb:
+            logger.info(f"Preferring GPU 1 for single-GPU use ({free1}MB free)")
+            return 1
+    # Otherwise, try GPU 0 if it has enough free memory
+    if 0 in available_gpus:
+        total0, free0 = get_gpu_memory_info(0)
+        if free0 >= min_free_mb:
+            logger.info(f"Using GPU 0 for single-GPU use ({free0}MB free)")
+            return 0
+    # Otherwise, pick the GPU with the most free memory
     best_gpu = None
     max_free_memory = 0
-    
     logger.info("Scanning GPUs for best memory availability:")
     for gpu_id in available_gpus:
         total, free = get_gpu_memory_info(gpu_id)
         utilization = ((total - free) / total * 100) if total > 0 else 0
         logger.info(f"  GPU {gpu_id}: {free:,}MB free / {total:,}MB total ({utilization:.1f}% used)")
-        
         if free > max_free_memory:
             max_free_memory = free
             best_gpu = gpu_id
-    
     if best_gpu is not None:
         logger.info(f"Selected GPU {best_gpu} with {max_free_memory:,}MB free memory")
-    
     return best_gpu
 
 
@@ -101,16 +109,17 @@ def setup_multi_gpu_processing(num_gpus: Optional[int] = None) -> List[int]:
     return selected_gpus
 
 
-def get_device(gpu_id: Optional[int] = None) -> torch.device:
-    """Get torch device for specified GPU or best available GPU."""
+def get_device(gpu_id: Optional[int] = None, min_free_mb: int = 2000) -> torch.device:
+    """Get torch device for specified GPU or best available GPU (prefer GPU 1 if it has enough resources, else GPU 0, else best available)."""
     if not torch.cuda.is_available():
         return torch.device("cpu")
-    
     if gpu_id is None:
-        gpu_id = select_best_gpu()
-        if gpu_id is None:
-            return torch.device("cpu")
-    
+        # Prefer GPU 1 if it has enough free memory, else GPU 0, else best available
+        best_gpu = select_best_gpu(min_free_mb=min_free_mb)
+        if best_gpu is not None:
+            return torch.device(f"cuda:{best_gpu}")
+        else:
+            return torch.device("cuda:0")
     return torch.device(f"cuda:{gpu_id}")
 
 
