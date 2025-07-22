@@ -2,9 +2,26 @@
 """
 Enhanced Audio Generation Script using XTTS-v2 with Multilingual Tokenizer
 Includes Whisper verification, multi-attempt generation, and maximum quality settings.
-"""
 
+DEBUG VERSION: Only processes segment 9 and preserves all chunk files for debugging truncation issues.
+"""
+# Set Hugging Face cache location to suppress warnings and improve performance
+# Set TensorFlow oneDNN options to 0 for consistent numerical results
 import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
+import warnings
+
+warnings.filterwarnings(
+    "ignore", 
+    message=".*GPT2InferenceModel has generative capabilities.*"
+)
+
+warnings.filterwarnings(
+    "ignore", 
+    message="The attention mask.*"
+)
+
 import sys
 import json
 import argparse
@@ -16,6 +33,12 @@ from TTS.api import TTS
 from pathlib import Path
 from gpu_utils import get_device, setup_multi_gpu_processing, clear_gpu_cache, parallel_process_with_gpus
 from multilingual_tokenizer import VoiceBpeTokenizer, split_sentence, multilingual_cleaners
+import nltk
+nltk.download('punkt', quiet=True)
+from nltk.tokenize import sent_tokenize
+
+torch.backends.cudnn.allow_tf32 = True          # keep TF32 if you like
+torch.backends.cudnn.benchmark = False          # prevents re-planning every shape
 
 # Fix PyTorch 2.6+ weights loading issue
 try:
@@ -91,77 +114,60 @@ def preprocess_text_enhanced(text, language):
     return cleaned_text.strip()
 
 
-def split_text_smart(text, language, max_length=None):
+def smart_chunk_text(text, language, char_limit):
     """
-    Smart text splitting using the multilingual tokenizer's split_sentence function
-    with enhanced anti-truncation logic.
+    Split text into chunks that are safe for the tokenizer and TTS.
+    1. Split by sentences (using NLTK for English, fallback to period for others).
+    2. If a sentence is too long, try to split at commas or other punctuation (using the original sentence).
+    3. If still too long, split at the nearest space before the char limit.
+    4. Only then apply aggressive cleaning/tokenization to each chunk.
     """
-    if not text or not text.strip():
-        return []
-    
-    if max_length is None:
-        max_length = get_language_char_limit(language)
-    
-    # If text is short enough, return as single chunk
-    if len(text) <= max_length:
-        return [text.strip()]
-    
-    # Use the multilingual tokenizer's smart splitting (already imported)
-    
-    try:
-        # Use the tokenizer's advanced sentence splitting
-        chunks = split_sentence(text, language, max_length)
-        
-        # Ensure all chunks are within limits
-        final_chunks = []
-        for chunk in chunks:
-            chunk = chunk.strip()
-            if not chunk:
-                continue
-                
-            if len(chunk) <= max_length:
-                final_chunks.append(chunk)
-            else:
-                # Further split oversized chunks by words
-                words = chunk.split()
-                current_chunk = ""
-                
-                for word in words:
-                    test_chunk = current_chunk + (" " if current_chunk else "") + word
-                    
-                    if len(test_chunk) <= max_length:
-                        current_chunk = test_chunk
+    # Step 1: Sentence splitting
+    if language == 'en':
+        sentences = sent_tokenize(text)
+    else:
+        # Fallback: split on period
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+    chunks = []
+    for sent in sentences:
+        # Step 2: If sentence is too long, try to split at commas or other punctuation
+        if len(sent) > char_limit - 10:
+            # Try to split at commas, semicolons, or dashes
+            split_points = [m.start() for m in re.finditer(r'[,:;\-]', sent)]
+            last = 0
+            for idx in split_points:
+                if idx - last > char_limit - 10:
+                    # If the chunk is still too long, split at the last space before char_limit
+                    sub = sent[last:idx].strip()
+                    if len(sub) > char_limit - 10:
+                        # Step 3: Split at nearest space before char_limit
+                        safe_idx = sub.rfind(' ', 0, char_limit - 10)
+                        if safe_idx > 0:
+                            chunks.append(sub[:safe_idx].strip())
+                            last = last + safe_idx
+                        else:
+                            chunks.append(sub)
+                            last = idx
                     else:
-                        if current_chunk:
-                            final_chunks.append(current_chunk.strip())
-                        current_chunk = word
-                
-                if current_chunk:
-                    final_chunks.append(current_chunk.strip())
-        
-        return [chunk for chunk in final_chunks if chunk.strip()]
-        
-    except Exception as e:
-        print(f"  ⚠️  Fallback to simple word-based splitting due to: {e}")
-        # Fallback to simple word-based splitting
-        words = text.split()
-        chunks = []
-        current_chunk = ""
-        
-        for word in words:
-            test_chunk = current_chunk + (" " if current_chunk else "") + word
-            
-            if len(test_chunk) <= max_length:
-                current_chunk = test_chunk
-            else:
-                if current_chunk:
-                    chunks.append(current_chunk.strip())
-                current_chunk = word
-        
-        if current_chunk:
-            chunks.append(current_chunk.strip())
-        
-        return chunks
+                        chunks.append(sub)
+                        last = idx
+            # Add the last chunk
+            if last < len(sent):
+                sub = sent[last:].strip()
+                if len(sub) > char_limit - 10:
+                    safe_idx = sub.rfind(' ', 0, char_limit - 10)
+                    if safe_idx > 0:
+                        chunks.append(sub[:safe_idx].strip())
+                        chunks.append(sub[safe_idx:].strip())
+                    else:
+                        chunks.append(sub)
+                else:
+                    chunks.append(sub)
+        else:
+            chunks.append(sent.strip())
+    # Step 4: Clean/tokenize each chunk
+    cleaned_chunks = [preprocess_text_enhanced(chunk, language) for chunk in chunks if chunk.strip()]
+    return [c for c in cleaned_chunks if c]
 
 
 def calculate_similarity(text1, text2):
@@ -249,19 +255,30 @@ def find_speaker_samples(speaker_dir):
     return speaker_samples
 
 
-def verify_transcription_with_whisper(audio_path, expected_text, language="en", device=None):
+# Add a helper for colored output
+RED = '\033[91m'
+BOLD = '\033[1m'
+RESET = '\033[0m'
+
+def printq(*args, **kwargs):
+    """Print only if not in quiet mode."""
+    if not getattr(printq, 'quiet', False):
+        print(*args, **kwargs)
+
+
+def verify_transcription_with_whisper(audio_path, expected_text, language="en", device=None, quiet=False, confidence_threshold=85.0):
     """Verify generated audio quality using Whisper transcription."""
     try:
         # Load Whisper model (use small model for speed)
         model = whisper.load_model("small", device=device)
-        
         # Transcribe the generated audio
         result = model.transcribe(audio_path, language=language)
         transcribed_text = result["text"].strip()
-        
+        # Normalize both texts using the same preprocessing
+        norm_expected = preprocess_text_enhanced(expected_text, language)
+        norm_transcribed = preprocess_text_enhanced(transcribed_text, language)
         # Calculate similarity percentage
-        similarity_percentage = calculate_similarity(transcribed_text, expected_text)
-        
+        similarity_percentage = calculate_similarity(norm_transcribed, norm_expected)
         # Get Whisper confidence (segments have confidence scores)
         whisper_confidence = 0.0
         if "segments" in result and result["segments"]:
@@ -271,14 +288,24 @@ def verify_transcription_with_whisper(audio_path, expected_text, language="en", 
                 avg_log_prob = sum(confidences) / len(confidences)
                 # Convert log probability to percentage (rough approximation)
                 whisper_confidence = max(0.0, min(100.0, (avg_log_prob + 1.0) * 100))
-        
+        # Only print if not quiet, or always print key info if quiet
+        if not quiet:
+            print(f"    📝 Full expected (normalized, {len(norm_expected)} chars):\n    {norm_expected}")
+            print(f"    🎤 Full got (normalized, {len(norm_transcribed)} chars):\n    {norm_transcribed}")
+            print(f"    📝 Full expected (original):\n    {expected_text}")
+            print(f"    🎤 Full got (original):\n    {transcribed_text}")
+        else:
+            # Show in red and bold if similarity below threshold
+            highlight = RED + BOLD if similarity_percentage < confidence_threshold else ''
+            reset = RESET if similarity_percentage < confidence_threshold else ''
+            print(f"    📝 Full expected (normalized, {len(norm_expected)} chars):\n    {highlight}{norm_expected}{reset}")
+            print(f"    🎤 Full got (normalized, {len(norm_transcribed)} chars):\n    {highlight}{norm_transcribed}{reset}")
         return {
             "similarity": similarity_percentage,
             "whisper_confidence": whisper_confidence,
-            "transcribed_text": transcribed_text,
-            "expected_text": expected_text
+            "transcribed_text": norm_transcribed,
+            "expected_text": norm_expected
         }
-        
     except Exception as e:
         print(f"    ⚠️  Whisper verification failed: {e}")
         return {
@@ -290,43 +317,42 @@ def verify_transcription_with_whisper(audio_path, expected_text, language="en", 
 
 
 def generate_audio_segment(tts, segment, speaker_sample, language, output_dir, 
-                          max_retries=5, confidence_threshold=85.0, speed=1.25):
+                          max_retries=5, confidence_threshold=85.0, quiet=False):
     """
     Generate audio for a single segment with quality verification and retry logic.
+    DEBUG: Does NOT delete or modify any chunk files for debugging purposes.
     """
     segment_id = segment['segment_id']
     speaker = segment['speaker']
     # Handle both transcribed and translated formats
     translated_text = segment.get('translated_transcription') or segment.get('transcription', '')
     
-    print(f"  🎵 Generating audio for segment {segment_id}...")
-    print(f"  👤 Speaker: {speaker}")
-    print(f"  📝 Text: {translated_text}")
+    printq(f"  🎵 Generating audio for segment {segment_id}...")
+    printq(f"  👤 Speaker: {speaker}")
+    printq(f"   Text: {translated_text}")
     
     # Enhanced text preprocessing
     cleaned_text = preprocess_text_enhanced(translated_text, language)
-    print(f"  ✨ Cleaned: {cleaned_text}")
+    printq(f"  ✨ Cleaned: {cleaned_text}")
     
     # Get language-specific character limit
     char_limit = get_language_char_limit(language)
-    print(f"  📏 Char limit for {language}: {char_limit}")
+    printq(f"  📏 Char limit for {language}: {char_limit}")
     
     # Smart text splitting with anti-truncation
-    if len(cleaned_text) > char_limit:
-        print(f"  ✂️  Text too long ({len(cleaned_text)} chars), using smart splitting...")
-        text_chunks = split_text_smart(cleaned_text, language, char_limit)
-        print(f"  📦 Split into {len(text_chunks)} chunks")
+    text_chunks = smart_chunk_text(translated_text, language, char_limit)
+    if len(text_chunks) > 1:
+        printq(f"  📦 Split into {len(text_chunks)} chunks (smart chunking)")
     else:
-        text_chunks = [cleaned_text]
-        print(f"  ✅ Text fits in single chunk")
+        printq(f"  ✅ Text fits in single chunk (smart chunking)")
     
     if not text_chunks:
-        print(f"  ❌ No valid text chunks generated")
+        printq(f"  ❌ No valid text chunks generated")
         return None
     
-    print(f"  🎯 Text chunks:")
+    printq(f"  🎯 Text chunks:")
     for i, chunk in enumerate(text_chunks):
-        print(f"    Chunk {i+1}: ({len(chunk)} chars) {chunk[:60]}...")
+        printq(f"    Chunk {i+1}: ({len(chunk)} chars) {chunk[:60]}...")
     
     # Generate filename
     duration_str = f"{segment['duration']:.3f}".replace('.', '-')
@@ -337,14 +363,14 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
     best_audio_path = None
     best_verification = None
     
-    print(f"  🎯 Target confidence threshold: {confidence_threshold}%")
+    printq(f"  🎯 Target confidence threshold: {confidence_threshold}%")
     
     # Create unique temporary path for each attempt to avoid conflicts
     temp_dir = os.path.join(output_dir, f"temp_{segment_id}")
     os.makedirs(temp_dir, exist_ok=True)
     
     for attempt in range(max_retries):
-        print(f"  🎬 Attempt {attempt + 1}/{max_retries}...")
+        printq(f"  🎬 Attempt {attempt + 1}/{max_retries}...")
         
         # Use temporary path for this attempt
         temp_output_path = os.path.join(temp_dir, f"attempt_{attempt + 1}.wav")
@@ -353,7 +379,7 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             # Generate audio with maximum quality settings
             if len(text_chunks) > 1:
                 # Multiple chunks - generate separately and concatenate
-                print(f"    🔗 Generating {len(text_chunks)} chunks...")
+                printq(f"    🔗 Generating {len(text_chunks)} chunks...")
                 chunk_files = []
                 
                 for i, chunk in enumerate(text_chunks):
@@ -367,21 +393,10 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                         language=language,
                         file_path=chunk_path
                     )
-                    # Trim leading/trailing silence from chunk using ffmpeg
-                    trimmed_chunk_path = os.path.join(temp_dir, f"trimmed_{chunk_filename}")
-                    trim_cmd = [
-                        "ffmpeg", "-y", "-i", chunk_path,
-                        "-af", "silenceremove=start_periods=1:start_silence=0.1:start_threshold=-40dB:stop_periods=1:stop_silence=0.1:stop_threshold=-40dB",
-                        trimmed_chunk_path
-                    ]
-                    subprocess.run(trim_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                    # Remove the original untrimmed chunk
-                    if os.path.exists(chunk_path):
-                        os.remove(chunk_path)
-                    chunk_files.append(trimmed_chunk_path)
+                    chunk_files.append(chunk_path)
                 
                 # Concatenate chunks using FFmpeg
-                print(f"    🔗 Concatenating {len(chunk_files)} chunks...")
+                printq(f"    🔗 Concatenating {len(chunk_files)} chunks...")
                 concat_cmd = [
                     "ffmpeg", "-y", "-f", "concat", "-safe", "0",
                     "-i", "/dev/stdin", "-c", "copy", temp_output_path
@@ -393,10 +408,12 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                 result = subprocess.run(concat_cmd, input=file_list, text=True, 
                                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True)
                 
-                # Clean up chunk files immediately
+                # After concatenation, delete the chunk files
                 for chunk_file in chunk_files:
                     if os.path.exists(chunk_file):
                         os.remove(chunk_file)
+                
+                # Do NOT delete temp_dir here; wait until all processing is complete
                 
                 combined_text = " ".join(text_chunks)
             else:
@@ -420,30 +437,32 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             except:
                 actual_audio_duration = None
             
-            print(f"    ✅ Audio generated successfully")
+            printq(f"    ✅ Audio generated successfully")
             if actual_audio_duration:
-                print(f"    ⏱️  Duration: {actual_audio_duration:.3f}s")
+                printq(f"    ⏱️  Duration: {actual_audio_duration:.3f}s")
             
             # Verify quality with Whisper
-            print(f"    🎤 Verifying quality with Whisper...")
-            verification = verify_transcription_with_whisper(temp_output_path, combined_text, language)
+            if not quiet:
+                printq(f"    🎤 Verifying quality with Whisper...")
+            else:
+                printq(f"    🎤 Verifying quality with Whisper...")
+            verification = verify_transcription_with_whisper(temp_output_path, combined_text, language, quiet=quiet, confidence_threshold=confidence_threshold)
             
             similarity = verification["similarity"]
             whisper_conf = verification["whisper_confidence"]
             
-            print(f"    📊 Similarity: {similarity:.1f}% | Whisper confidence: {whisper_conf:.1f}%")
-            print(f"    📝 Expected: {combined_text[:60]}...")
-            print(f"    🎤 Got:      {verification['transcribed_text'][:60]}...")
+            printq(f"    📊 Similarity: {similarity:.1f}% | Whisper confidence: {whisper_conf:.1f}%")
+            # Remove any print statements that use [:60] or ... for expected/got
+            printq(f"    📝 Expected: {combined_text}")
+            printq(f"    🎤 Got:      {verification['transcribed_text']}")
             
             if similarity >= confidence_threshold:
-                print(f"    ✅ Quality meets threshold ({similarity:.1f}% >= {confidence_threshold}%)")
+                printq(f"    ✅ Quality meets threshold ({similarity:.1f}% >= {confidence_threshold}%)")
                 # Move successful file to final location
                 import shutil
                 shutil.move(temp_output_path, output_path)
-                # Clean up temp directory
-                import shutil
-                shutil.rmtree(temp_dir, ignore_errors=True)
-                return {
+                # Do NOT delete temp_dir here; wait until all processing is complete
+                return_result = {
                     "success": True,
                     "output_path": output_path,
                     "similarity": similarity,
@@ -454,9 +473,10 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                     "actual_duration": actual_audio_duration,
                     "quality_status": "passed_threshold"
                 }
+                break
             else:
                 if similarity > best_similarity:
-                    print(f"    📈 New best attempt: {similarity:.1f}% (attempt {attempt + 1})")
+                    printq(f"    📈 New best attempt: {similarity:.1f}% (attempt {attempt + 1})")
                     best_similarity = similarity
                     # Keep track of best attempt data
                     best_verification = verification.copy()
@@ -464,26 +484,24 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
                     # Save the best temp file path
                     best_audio_path = temp_output_path
                 else:
-                    print(f"    📉 Lower quality than best attempt ({similarity:.1f}% < {best_similarity:.1f}%)")
-                    # Clean up this attempt since it's not the best
-                    if os.path.exists(temp_output_path):
-                        os.remove(temp_output_path)
+                    printq(f"    📉 Lower quality than best attempt ({similarity:.1f}% < {best_similarity:.1f}%)")
+                    # DEBUG: Do NOT delete temp_output_path
+                    # if os.path.exists(temp_output_path):
+                    #     os.remove(temp_output_path)
             
         except Exception as e:
-            print(f"    ❌ Generation failed: {e}")
+            printq(f"    ❌ Generation failed: {e}")
             continue
     
     # Use best attempt if no attempt met threshold
     if best_audio_path and os.path.exists(best_audio_path):
-        print(f"  📋 No attempt met {confidence_threshold}% threshold. Using best attempt ({best_similarity:.1f}%)")
+        printq(f"  📋 No attempt met {confidence_threshold}% threshold. Using best attempt ({best_similarity:.1f}%)")
         
         # Move the best attempt to final location
         import shutil
         shutil.move(best_audio_path, output_path)
-        # Clean up temp directory
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        
-        return {
+        # Do NOT delete temp_dir here; wait until all processing is complete
+        return_result = {
             "success": True,
             "output_path": output_path,
             "similarity": best_similarity,
@@ -494,31 +512,35 @@ def generate_audio_segment(tts, segment, speaker_sample, language, output_dir,
             "actual_duration": best_verification.get("actual_duration"),
             "quality_status": "best_below_threshold"
         }
-    
-    # Clean up temp directory if all attempts failed
+    else:
+        printq(f"  ❌ All {max_retries} attempts failed")
+        return_result = None
+    # Now, after all processing, delete temp_dir
     import shutil
     shutil.rmtree(temp_dir, ignore_errors=True)
-    
-    print(f"  ❌ All {max_retries} attempts failed")
-    return None
+    return return_result
 
 
 def main():
     parser = argparse.ArgumentParser(description='Enhanced audio generation with multilingual tokenizer')
     parser.add_argument('--input', required=True, help='Input JSON file with translations')
-    parser.add_argument('--output', required=True, help='Output directory for audio files')
+    parser.add_argument('--output', help='Output directory for audio files (default: translated_segments)')
     parser.add_argument('--language', required=True, help='Target language code (e.g., es, fr, de)')
     parser.add_argument('--speaker-dir', required=True, help='Directory containing speaker samples')
     parser.add_argument('--max-retries', type=int, default=5, help='Maximum retry attempts per segment')
     parser.add_argument('--confidence-threshold', type=float, default=85.0, help='Quality threshold percentage')
-    parser.add_argument('--speed', type=float, default=1.25, help='Speech speed multiplier (1.0 = normal, 1.25 = 25% faster)')
     parser.add_argument('--gpu-id', type=int, help='Specific GPU ID to use')
     parser.add_argument('--parallel', action='store_true', help='Use parallel processing (experimental)')
+    parser.add_argument('--quiet', action='store_true', help='Suppress all output except warnings, errors, and key results')
     
     args = parser.parse_args()
     
+    # Set default output directory if not specified
+    if not args.output:
+        args.output = 'translated_segments'
+    
     # Initialize multilingual tokenizer
-    print(f"🧠 Initializing multilingual tokenizer for language: {args.language}")
+    printq(f"🧠 Initializing multilingual tokenizer for language: {args.language}")
     
     # Load translations
     translations = load_translations(args.input)
@@ -528,7 +550,7 @@ def main():
     # Find speaker samples
     speaker_samples = find_speaker_samples(args.speaker_dir)
     if not speaker_samples:
-        print("Error: No speaker samples found")
+        printq("Error: No speaker samples found")
         return False
     
     # Create output directory
@@ -537,43 +559,29 @@ def main():
     # Setup GPU
     if args.parallel:
         device = setup_multi_gpu_processing()
-        print("Using parallel GPU processing")
+        printq("Using parallel GPU processing")
     else:
         device = get_device(args.gpu_id)
-        print(f"Using single GPU: {device}")
+        printq(f"Using single GPU: {device}")
     
     # Initialize XTTS model with maximum quality settings
-    print("🎵 Loading XTTS-v2 model with maximum quality settings...")
+    printq("🎵 Loading XTTS-v2 model with maximum quality settings...")
     try:
         # Set weights_only=False for PyTorch 2.6+ compatibility
         original_load = torch.load
         torch.load = lambda *args, **kwargs: original_load(*args, **kwargs, weights_only=False) if 'weights_only' not in kwargs else original_load(*args, **kwargs)
-        
-        # Fix GPT2InferenceModel compatibility issue
+
+        # Safe GPT2 patch for compatibility
         try:
             import transformers
-            from transformers import GPT2LMHeadModel
-            
-            # Check if we need to patch the generate method
-            try:
-                from TTS.tts.utils.synthesis import Synthesizer
-                from TTS.tts.models.xtts import Xtts
-                
-                # Monkey patch the missing generate method for GPT2InferenceModel
-                if hasattr(transformers, 'models') and hasattr(transformers.models, 'gpt2'):
-                    gpt2_model = transformers.models.gpt2.modeling_gpt2.GPT2LMHeadModel
-                    if not hasattr(gpt2_model, 'generate'):
-                        def generate_method(self, *args, **kwargs):
-                            # Use the parent class generate method
-                            return super(type(self), self).generate(*args, **kwargs)
-                        gpt2_model.generate = generate_method
-                        print("  🔧 Applied GPT2InferenceModel.generate compatibility fix")
-                        
-            except Exception as e:
-                print(f"  ⚠️  Could not apply GPT2 patch: {e}")
-                
+            gpt2_model = getattr(transformers, "GPT2LMHeadModel", None)
+            if gpt2_model and not hasattr(gpt2_model, "generate"):
+                def generate_method(self, *args, **kwargs):
+                    return super(type(self), self).generate(*args, **kwargs)
+                gpt2_model.generate = generate_method
+                printq("  🔧 Applied GPT2LMHeadModel.generate compatibility fix")
         except Exception as e:
-            print(f"  ⚠️  GPT2 compatibility check failed: {e}")
+            printq(f"  ⚠️  Could not apply GPT2 patch: {e}")
         
         tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
         
@@ -583,21 +591,20 @@ def main():
         if hasattr(tts, 'to') and device.type == 'cuda':
             tts = tts.to(device)
         
-        print("  ✅ TTS model loaded successfully with maximum quality settings:")
-        print("  • Temperature: 0.65 (stability)")
-        print("  • Repetition penalty: 5.0 (reduce repetition)")
-        print("  • Top-k: 20 (higher quality)")
-        print("  • Top-p: 0.75 (more predictable)")
-        print("  • Split sentences: enabled (better quality)")
-        print("  • Speed: {:.2f}x (natural speech pace)".format(args.speed))
-        print("  • Enhanced multilingual tokenizer: enabled")
-        print("  • Advanced anti-truncation: enabled")
+        printq("  ✅ TTS model loaded successfully with maximum quality settings:")
+        printq("  • Temperature: 0.65 (stability)")
+        printq("  • Repetition penalty: 5.0 (reduce repetition)")
+        printq("  • Top-k: 20 (higher quality)")
+        printq("  • Top-p: 0.75 (more predictable)")
+        printq("  • Split sentences: enabled (better quality)")
+        printq("  • Enhanced multilingual tokenizer: enabled")
+        printq("  • Advanced anti-truncation: enabled")
         
     except Exception as e:
-        print(f"Error loading XTTS model: {e}")
+        printq(f"Error loading XTTS model: {e}")
         return False
     
-    print(f"🎯 Processing {len(translations['segments'])} segments...")
+    printq(f"🎯 Processing {len(translations['segments'])} segments...")
     
     # Process segments
     results = []
@@ -605,20 +612,30 @@ def main():
     failed = 0
     skipped = 0
     
-    for i, segment in enumerate(translations['segments']):
-        print(f"\n{'='*80}")
-        print(f"Processing segment {i+1}/{len(translations['segments'])}: {segment['segment_id']}")
+    printq.quiet = args.quiet
+
+    # Restore: process all segments
+    segments_to_process = translations['segments']
+
+    for i, segment in enumerate(segments_to_process):
+        # Only print separator and segment info if not quiet, or always if quiet
+        if args.quiet:
+            print("="*80)
+            print(f"Processing segment {i+1}/{len(translations['segments'])}: {segment['segment_id']}")
+        else:
+            printq("\n" + "="*80)
+            printq(f"Processing segment {i+1}/{len(translations['segments'])}: {segment['segment_id']}")
         
         # Skip very short segments
         if segment['duration'] < 0.5:
-            print(f"  ⏭️  Skipping short segment ({segment['duration']:.3f}s)")
+            printq(f"  ⏭️  Skipping short segment ({segment['duration']:.3f}s)")
             skipped += 1
             continue
         
         # Get speaker sample
         speaker = segment['speaker']
         if speaker not in speaker_samples:
-            print(f"  ❌ No speaker sample found for {speaker}")
+            printq(f"  ❌ No speaker sample found for {speaker}")
             failed += 1
             continue
         
@@ -627,7 +644,8 @@ def main():
         # Generate audio
         result = generate_audio_segment(
             tts, segment, speaker_sample, args.language, args.output,
-            args.max_retries, args.confidence_threshold, args.speed
+            args.max_retries, args.confidence_threshold,
+            quiet=args.quiet
         )
         
         if result:
@@ -636,18 +654,23 @@ def main():
             result['expected_duration'] = segment['duration']
             results.append(result)
             successful += 1
-            print(f"  ✅ Success: {result['similarity']:.1f}% similarity")
+            if args.quiet:
+                print(f"    Quality: {result['whisper_confidence']:.1f}%")
+                print(f"    Similarity: {result['similarity']:.1f}%")
+            else:
+                printq(f"    Quality: {result['whisper_confidence']:.1f}%")
+                printq(f"    Similarity: {result['similarity']:.1f}%")
         else:
             failed += 1
-            print(f"  ❌ Failed after {args.max_retries} attempts")
+            printq(f"  ❌ Failed after {args.max_retries} attempts")
     
     # Generate summary report
-    print(f"\n🎉 Audio generation completed!")
-    print(f"📊 Results Summary:")
-    print(f"  • Total segments processed: {len(translations['segments'])}")
-    print(f"  • Successful generations: {successful}")
-    print(f"  • Failed generations: {failed}")
-    print(f"  • Skipped segments (< 0.5s): {skipped}")
+    printq(f"\n🎉 Audio generation completed!")
+    printq(f"📊 Results Summary:")
+    printq(f"  • Total segments processed: {len(translations['segments'])}")
+    printq(f"  • Successful generations: {successful}")
+    printq(f"  • Failed generations: {failed}")
+    printq(f"  • Skipped segments (< 0.5s): {skipped}")
     
     if results:
         # Quality analysis
@@ -655,10 +678,10 @@ def main():
         avg_similarity = sum(similarities) / len(similarities)
         passed_threshold = len([r for r in results if r['quality_status'] == 'passed_threshold'])
         
-        print(f"\n🎯 Quality Analysis:")
-        print(f"  • Average similarity: {avg_similarity:.1f}%")
-        print(f"  • Passed threshold (≥{args.confidence_threshold}%): {passed_threshold}")
-        print(f"  • Best below threshold: {len(results) - passed_threshold}")
+        printq(f"\n🎯 Quality Analysis:")
+        printq(f"  • Average similarity: {avg_similarity:.1f}%")
+        printq(f"  • Passed threshold (≥{args.confidence_threshold}%): {passed_threshold}")
+        printq(f"  • Best below threshold: {len(results) - passed_threshold}")
         
         # Duration analysis
         expected_durations = [r['expected_duration'] for r in results if r.get('expected_duration')]
@@ -667,10 +690,10 @@ def main():
         if expected_durations and actual_durations:
             total_expected = sum(expected_durations)
             total_actual = sum(actual_durations)
-            print(f"\n📊 Duration Analysis:")
-            print(f"  • Total expected duration: {total_expected:.3f}s")
-            print(f"  • Total actual duration: {total_actual:.3f}s")
-            print(f"  • Duration ratio: {total_actual/total_expected:.3f}")
+            printq(f"\n📊 Duration Analysis:")
+            printq(f"  • Total expected duration: {total_expected:.3f}s")
+            printq(f"  • Total actual duration: {total_actual:.3f}s")
+            printq(f"  • Duration ratio: {total_actual/total_expected:.3f}")
         
         # Save detailed report
         report = {
@@ -692,11 +715,11 @@ def main():
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
         
-        print(f"📁 Report saved to: {report_path}")
+        printq(f"📁 Report saved to: {report_path}")
     
     # Clear GPU cache
     clear_gpu_cache(device)
-    print("🧹 GPU cache cleared")
+    printq("🧹 GPU cache cleared")
     
     return True
 

@@ -2,6 +2,18 @@
 
 # Audio Processing Toolkit - Complete Workflow Script
 # Complete pipeline: Extract audio → Diarization → Translation → Speaker isolation → TTS → Vocal removal
+# --- unset deprecated variables ---
+unset TRANSFORMERS_CACHE
+unset PYTORCH_TRANSFORMERS_CACHE
+unset PYTORCH_PRETRAINED_BERT_CACHE
+# --- set the new ones (all under your project) ---
+export TF_CPP_MIN_LOG_LEVEL=2 
+export HF_HOME="$(pwd)/hf_cache"               
+export HF_HUB_CACHE="$HF_HOME/hub"             
+export HF_DATASETS_CACHE="$HF_HOME/datasets"
+export HF_METRICS_CACHE="$HF_HOME/metrics"
+export HF_MODULES_CACHE="$HF_HOME/modules"
+export TORCH_CUDNN_V8_API_DISABLED=1 
 
 set -e  # Exit on any error
 
